@@ -1,4 +1,4 @@
-package gui.components;
+package com.paboomi.frontend.gui.components;
 
 /**
  *

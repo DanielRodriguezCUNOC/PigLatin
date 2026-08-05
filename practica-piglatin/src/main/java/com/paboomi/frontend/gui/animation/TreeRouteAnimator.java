@@ -1,4 +1,4 @@
-package gui.animation;
+package com.paboomi.frontend.gui.animation;
 
 /**
  *

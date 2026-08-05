@@ -1,18 +1,69 @@
-package gui;
+package com.paboomi.frontend.gui;
+
+import com.paboomi.frontend.gui.components.TextLineNumber;
+import java.awt.Color;
+import java.awt.Font;
 
 /**
  *
  * @author clare
  */
 public class PrincipalWindow extends javax.swing.JFrame {
-    
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(PrincipalWindow.class.getName());
+    private final Font codeFont = new Font("Consolas", Font.PLAIN, 14);
 
     /**
      * Creates new form PrincipalWindow
      */
     public PrincipalWindow() {
         initComponents();
+
+        // Color Palette
+        Color bgEditor = new java.awt.Color(30, 30, 46);       // Dark blue background
+        Color fgEditor = new java.awt.Color(205, 214, 244);     // Soft white
+        Color currentLineBg = new java.awt.Color(49, 50, 68);   // Active line fund
+        Color lineNumbersFg = new java.awt.Color(108, 112, 134); // Line numbers turned off
+        Color currentLineFg = new java.awt.Color(245, 194, 231); // Neon pink/purple for the current line
+        Color bgConsola = new java.awt.Color(24, 24, 37);       // Darker console background
+
+        // Code Editor
+        txtACodeEditor.setFont(codeFont);
+        txtACodeEditor.setTabSize(4);
+        txtACodeEditor.setBackground(bgEditor);
+        txtACodeEditor.setForeground(fgEditor);
+        txtACodeEditor.setCaretColor(new java.awt.Color(245, 224, 220)); // Glowing cursor
+        txtACodeEditor.setSelectionColor(new java.awt.Color(69, 71, 90)); // Text selection color
+
+        // This code shows the lines number in the code editor
+        TextLineNumber lineNumber = new TextLineNumber(txtACodeEditor);
+        lineNumber.setFont(txtACodeEditor.getFont());
+        lineNumber.setBackground(bgEditor);
+        lineNumber.setForeground(lineNumbersFg);
+        lineNumber.setCurrentLineForeground(currentLineFg); // Color of the line where the cursor is located
+        jScrollPane1.setRowHeaderView(lineNumber);
+        
+        // Console Style
+        jTextArea2.setBackground(bgConsola);
+        jTextArea2.setForeground(new java.awt.Color(166, 227, 161)); // Green terminal for outputs
+        txtFCommandConsole.setBackground(bgConsola);
+        txtFCommandConsole.setForeground(fgEditor);
+        
+        // Highlight stack buttons
+        jButton1.setBackground(new java.awt.Color(137, 180, 250)); // Soft blue
+        jButton1.setForeground(java.awt.Color.BLACK);
+        jButton2.setBackground(new java.awt.Color(243, 139, 168)); // Soft Pink
+        jButton2.setForeground(java.awt.Color.BLACK);
+
+        // Estyle for the State Bar
+        lblStateBar.setBackground(new java.awt.Color(17, 17, 27));
+        lblStateBar.setForeground(new java.awt.Color(147, 153, 178));
+        lblStateBar.setText(" Status: Ready | Mode: Editing ");
+
+        // Clean bordered
+        jSplitPane1.setBorder(null);
+        jSplitPane2.setBorder(null);
+
     }
 
     /**
@@ -24,36 +75,145 @@ public class PrincipalWindow extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jSplitPane2 = new javax.swing.JSplitPane();
+        jSplitPane1 = new javax.swing.JSplitPane();
+        pnlCodeEditor = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        txtACodeEditor = new javax.swing.JTextArea();
+        pnlConsole = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTextArea2 = new javax.swing.JTextArea();
+        txtFCommandConsole = new javax.swing.JTextField();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        pnlStackViewer = new javax.swing.JPanel();
+        jPanel4 = new javax.swing.JPanel();
+        jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        jTextArea1 = new javax.swing.JTextArea();
+        pnlAST = new javax.swing.JPanel();
+        pnlSymbolTable = new javax.swing.JPanel();
+        pnlErrorReport = new javax.swing.JPanel();
+        pnlTranslatedCode = new javax.swing.JPanel();
+        lblStateBar = new javax.swing.JLabel();
+        jMenuBar2 = new javax.swing.JMenuBar();
+        jMenu3 = new javax.swing.JMenu();
+        jMenu4 = new javax.swing.JMenu();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        setMinimumSize(new java.awt.Dimension(1225, 850));
+        setPreferredSize(new java.awt.Dimension(1225, 850));
+        setSize(new java.awt.Dimension(1225, 850));
+
+        jSplitPane2.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        jSplitPane2.setDividerLocation(500);
+        jSplitPane2.setToolTipText("");
+
+        jSplitPane1.setDividerLocation(425);
+        jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+
+        pnlCodeEditor.setMinimumSize(new java.awt.Dimension(425, 300));
+        pnlCodeEditor.setPreferredSize(new java.awt.Dimension(400, 300));
+        pnlCodeEditor.setLayout(new java.awt.BorderLayout());
+
+        jScrollPane1.setMinimumSize(new java.awt.Dimension(400, 300));
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(400, 300));
+
+        txtACodeEditor.setColumns(20);
+        txtACodeEditor.setRows(5);
+        jScrollPane1.setViewportView(txtACodeEditor);
+
+        pnlCodeEditor.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+
+        jSplitPane1.setTopComponent(pnlCodeEditor);
+
+        pnlConsole.setLayout(new java.awt.BorderLayout());
+
+        jTextArea2.setColumns(20);
+        jTextArea2.setRows(5);
+        jScrollPane2.setViewportView(jTextArea2);
+
+        pnlConsole.add(jScrollPane2, java.awt.BorderLayout.CENTER);
+
+        txtFCommandConsole.setText("Ingrese el comando");
+        pnlConsole.add(txtFCommandConsole, java.awt.BorderLayout.SOUTH);
+
+        jSplitPane1.setRightComponent(pnlConsole);
+
+        jSplitPane2.setLeftComponent(jSplitPane1);
+
+        pnlStackViewer.setLayout(new java.awt.BorderLayout());
+
+        jButton1.setText("Previous");
+        jPanel4.add(jButton1);
+
+        jButton2.setText("Next");
+        jPanel4.add(jButton2);
+
+        pnlStackViewer.add(jPanel4, java.awt.BorderLayout.NORTH);
+
+        jTextArea1.setColumns(20);
+        jTextArea1.setRows(5);
+        jScrollPane3.setViewportView(jTextArea1);
+
+        pnlStackViewer.add(jScrollPane3, java.awt.BorderLayout.SOUTH);
+
+        jTabbedPane1.addTab("Stack", pnlStackViewer);
+
+        pnlAST.setLayout(new java.awt.BorderLayout());
+        jTabbedPane1.addTab("AST", pnlAST);
+
+        pnlSymbolTable.setLayout(new java.awt.BorderLayout());
+        jTabbedPane1.addTab("Symbol Table", pnlSymbolTable);
+
+        pnlErrorReport.setLayout(new java.awt.BorderLayout());
+        jTabbedPane1.addTab("Error's Report", pnlErrorReport);
+        jTabbedPane1.addTab("Translated Code", pnlTranslatedCode);
+
+        jSplitPane2.setRightComponent(jTabbedPane1);
+
+        getContentPane().add(jSplitPane2, java.awt.BorderLayout.CENTER);
+
+        lblStateBar.setText("jLabel1");
+        getContentPane().add(lblStateBar, java.awt.BorderLayout.SOUTH);
+
+        jMenu3.setText("File");
+        jMenuBar2.add(jMenu3);
+
+        jMenu4.setText("Edit");
+        jMenuBar2.add(jMenu4);
+
+        setJMenuBar(jMenuBar2);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new PrincipalWindow().setVisible(true));
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JMenu jMenu3;
+    private javax.swing.JMenu jMenu4;
+    private javax.swing.JMenuBar jMenuBar2;
+    private javax.swing.JPanel jPanel4;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JSplitPane jSplitPane2;
+    private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JTextArea jTextArea1;
+    private javax.swing.JTextArea jTextArea2;
+    private javax.swing.JLabel lblStateBar;
+    private javax.swing.JPanel pnlAST;
+    private javax.swing.JPanel pnlCodeEditor;
+    private javax.swing.JPanel pnlConsole;
+    private javax.swing.JPanel pnlErrorReport;
+    private javax.swing.JPanel pnlStackViewer;
+    private javax.swing.JPanel pnlSymbolTable;
+    private javax.swing.JPanel pnlTranslatedCode;
+    private javax.swing.JTextArea txtACodeEditor;
+    private javax.swing.JTextField txtFCommandConsole;
     // End of variables declaration//GEN-END:variables
 }

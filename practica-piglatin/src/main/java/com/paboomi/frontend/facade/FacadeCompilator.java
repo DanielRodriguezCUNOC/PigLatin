@@ -1,4 +1,4 @@
-package facade;
+package com.paboomi.frontend.facade;
 
 /**
  *

@@ -1,4 +1,4 @@
-package facade.dto;
+package com.paboomi.frontend.facade.dto;
 
 /**
  *
