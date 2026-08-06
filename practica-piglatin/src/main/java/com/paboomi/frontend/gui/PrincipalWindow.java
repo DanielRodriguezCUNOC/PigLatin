@@ -20,12 +20,12 @@ public class PrincipalWindow extends javax.swing.JFrame {
         initComponents();
 
         // Color Palette
-        Color bgEditor = new java.awt.Color(30, 30, 46);       // Dark blue background
-        Color fgEditor = new java.awt.Color(205, 214, 244);     // Soft white
-        Color currentLineBg = new java.awt.Color(49, 50, 68);   // Active line fund
-        Color lineNumbersFg = new java.awt.Color(108, 112, 134); // Line numbers turned off
-        Color currentLineFg = new java.awt.Color(245, 194, 231); // Neon pink/purple for the current line
-        Color bgConsola = new java.awt.Color(24, 24, 37);       // Darker console background
+        Color bgEditor = new Color(30, 30, 46);       // Dark blue background
+        Color fgEditor = new Color(205, 214, 244);     // Soft white
+        Color currentLineBg = new Color(49, 50, 68);   // Active line fund
+        Color lineNumbersFg = new Color(108, 112, 134); // Line numbers turned off
+        Color currentLineFg = new Color(245, 194, 231); // Neon pink/purple for the current line
+        Color bgConsola = new Color(24, 24, 37);       // Darker console background
 
         // Code Editor
         txtACodeEditor.setFont(codeFont);
@@ -136,7 +136,8 @@ public class PrincipalWindow extends javax.swing.JFrame {
 
         pnlConsole.add(jScrollPane2, java.awt.BorderLayout.CENTER);
 
-        txtFCommandConsole.setText("Ingrese el comando");
+        txtFCommandConsole.setText("Enter the command");
+        txtFCommandConsole.addActionListener(this::txtFCommandConsoleActionPerformed);
         pnlConsole.add(txtFCommandConsole, java.awt.BorderLayout.SOUTH);
 
         jSplitPane1.setRightComponent(pnlConsole);
@@ -188,6 +189,10 @@ public class PrincipalWindow extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void txtFCommandConsoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtFCommandConsoleActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtFCommandConsoleActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
