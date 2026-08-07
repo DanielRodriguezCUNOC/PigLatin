@@ -1,8 +1,17 @@
 package com.paboomi.frontend.gui;
 
+import com.paboomi.backend.dtos.CustomErrorDTO;
+import com.paboomi.backend.services.ServiceAnalyzer;
+import com.paboomi.backend.services.TreeMapperService;
+import com.paboomi.frontend.facade.FacadeCompilator;
+import com.paboomi.frontend.facade.dto.AnalysisResultDTO;
+import com.paboomi.frontend.gui.animation.TreeRouteAnimator;
 import com.paboomi.frontend.gui.components.TextLineNumber;
-import java.awt.Color;
-import java.awt.Font;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.List;
 
 /**
  *
@@ -12,12 +21,22 @@ public class PrincipalWindow extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(PrincipalWindow.class.getName());
     private final Font codeFont = new Font("Consolas", Font.PLAIN, 14);
+    private final FacadeCompilator facade;
+    private JTree treeAST;
+    private TreeRouteAnimator treeAnimator;
 
     /**
      * Creates new form PrincipalWindow
      */
     public PrincipalWindow() {
+
+        // Initialize facade
+        ServiceAnalyzer analyzer = new ServiceAnalyzer();
+        TreeMapperService mapper = new TreeMapperService();
+        this.facade = new FacadeCompilator(analyzer, mapper);
+
         initComponents();
+        setupCustomComponents();
 
         // Color Palette
         Color bgEditor = new Color(30, 30, 46);       // Dark blue background
@@ -94,8 +113,12 @@ public class PrincipalWindow extends javax.swing.JFrame {
         pnlAST = new javax.swing.JPanel();
         pnlSymbolTable = new javax.swing.JPanel();
         pnlErrorReport = new javax.swing.JPanel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        tblErrorReport = new javax.swing.JTable();
         pnlTranslatedCode = new javax.swing.JPanel();
         lblStateBar = new javax.swing.JLabel();
+        jPanel1 = new javax.swing.JPanel();
+        btnCompile = new javax.swing.JButton();
         jMenuBar2 = new javax.swing.JMenuBar();
         jMenu3 = new javax.swing.JMenu();
         jMenu4 = new javax.swing.JMenu();
@@ -169,6 +192,22 @@ public class PrincipalWindow extends javax.swing.JFrame {
         jTabbedPane1.addTab("Symbol Table", pnlSymbolTable);
 
         pnlErrorReport.setLayout(new java.awt.BorderLayout());
+
+        tblErrorReport.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane4.setViewportView(tblErrorReport);
+
+        pnlErrorReport.add(jScrollPane4, java.awt.BorderLayout.CENTER);
+
         jTabbedPane1.addTab("Error's Report", pnlErrorReport);
         jTabbedPane1.addTab("Translated Code", pnlTranslatedCode);
 
@@ -178,6 +217,15 @@ public class PrincipalWindow extends javax.swing.JFrame {
 
         lblStateBar.setText("jLabel1");
         getContentPane().add(lblStateBar, java.awt.BorderLayout.SOUTH);
+
+        jPanel1.setMinimumSize(new java.awt.Dimension(80, 50));
+        jPanel1.setPreferredSize(new java.awt.Dimension(80, 50));
+
+        btnCompile.setText("Compile");
+        btnCompile.addActionListener(this::btnCompileActionPerformed);
+        jPanel1.add(btnCompile);
+
+        getContentPane().add(jPanel1, java.awt.BorderLayout.PAGE_START);
 
         jMenu3.setText("File");
         jMenuBar2.add(jMenu3);
@@ -194,17 +242,118 @@ public class PrincipalWindow extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_txtFCommandConsoleActionPerformed
 
+    private void btnCompileActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        onCompileExecuted();
+    }
+
+    private void setupCustomComponents() {
+        treeAST = new JTree();
+        treeAST.setModel(null); // Inicia vacío
+        treeAST.setBackground(new Color(30, 30, 46));
+
+        JScrollPane treeScrollPane = new JScrollPane(treeAST);
+        treeScrollPane.setBorder(null);
+
+        pnlAST.setLayout(new BorderLayout());
+        pnlAST.add(treeScrollPane, BorderLayout.CENTER);
+
+        treeAnimator = new TreeRouteAnimator(treeAST);
+
+        // Configure JTable Errors
+        pnlErrorReport.setLayout(new BorderLayout());
+
+        if(tblErrorReport == null){ tblErrorReport = new JTable(); }
+
+        JScrollPane errorScrollPane = new JScrollPane(tblErrorReport);
+        errorScrollPane.setBorder(null);
+        pnlErrorReport.add(errorScrollPane, BorderLayout.CENTER);
+
+    }
+
+    private void onCompileExecuted() {
+        String code = txtACodeEditor.getText();
+
+        if (code == null || code.trim().isEmpty()) {
+            jTextArea2.setText("[SYSTEM]: Source code is empty.");
+            return;
+        }
+
+        // Execute analyze with facade
+        AnalysisResultDTO result = facade.codeAnalyze(code);
+
+        if (result.isValid()) {
+            jTextArea2.setText(">>> Compilation finished successfully. No syntax errors.\n");
+            lblStateBar.setText(" Status: Success | Code parsed without errors ");
+
+            // Clean errors table
+            renderErrorsTable(List.of(), tblErrorReport);
+
+            // Assign the new generated tree model to the JTree.
+            treeAST.setModel(result.getTreeModel());
+
+            // Expand all branches
+            for (int i = 0; i < treeAST.getRowCount(); i++) {
+                treeAST.expandRow(i);
+            }
+
+            // Dynamically switch to the AST tab.
+            jTabbedPane1.setSelectedComponent(pnlAST);
+
+            // Start the route animation (node every 400ms)
+            treeAnimator.startAnimation(400);
+
+        } else {
+            // Show compilation errors captured by ANTLR4
+            jTextArea2.setText(">>> Compilation failed with " +
+                    result.getErrorsList().size() +
+                    " error(s).\nCheck the Error's Report tab");
+            lblStateBar.setText(" Status: Failed | Errors found during compilation ");
+
+            // Renderer errors in jtable
+            renderErrorsTable(result.getErrorsList(), tblErrorReport);
+
+            // Switch to the Error's Report tab automatically
+            jTabbedPane1.setSelectedComponent(pnlErrorReport);
+        }
+    }
+
+    public void renderErrorsTable(List<CustomErrorDTO> errors, JTable tblErrors) {
+        // Define columns
+        String[] columnNames = {"Line", "Column", "Error Description"};
+
+        // Create table model non-editable
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0){
+          @Override
+          public boolean isCellEditable(int row, int column) {return false;}
+        };
+
+        for (CustomErrorDTO error : errors) {
+            Object[] rowData = {
+                    error.line(),
+                    error.column(),
+                    error.message()
+            };
+            model.addRow(rowData);
+        }
+
+        tblErrors.setModel(model);
+
+    }
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnCompile;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JMenu jMenu3;
     private javax.swing.JMenu jMenu4;
     private javax.swing.JMenuBar jMenuBar2;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JSplitPane jSplitPane2;
     private javax.swing.JTabbedPane jTabbedPane1;
@@ -218,6 +367,7 @@ public class PrincipalWindow extends javax.swing.JFrame {
     private javax.swing.JPanel pnlStackViewer;
     private javax.swing.JPanel pnlSymbolTable;
     private javax.swing.JPanel pnlTranslatedCode;
+    private javax.swing.JTable tblErrorReport;
     private javax.swing.JTextArea txtACodeEditor;
     private javax.swing.JTextField txtFCommandConsole;
     // End of variables declaration//GEN-END:variables
