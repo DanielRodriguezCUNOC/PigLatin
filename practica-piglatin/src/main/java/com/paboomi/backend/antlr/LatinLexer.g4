@@ -8,6 +8,11 @@ MINUS: '-';
 MULT: '*';
 SPLIT: '/';
 
+// Declaration blocks
+VARIABILES_INIT: 'VARIABILES>';
+MUNERA_INIT: 'MUNERA>';
+MAIOR_INIT: 'MAIOR>';
+
 // Relational
 IDENTIC: '==';
 DIFF: '!=';
@@ -62,6 +67,8 @@ PERGE: 'perge';
 INTERRUMPE: 'interrumpe';
 ACTIO: 'actio';
 VARIABILES: 'VARIABILES';
+MUNERA: 'MUNERA';
+MAIOR: 'MAIOR';
 RATIO: 'ratio';
 REDDERE: 'reddere';
 LEERE: '<<';
