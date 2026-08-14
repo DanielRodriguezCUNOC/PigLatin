@@ -9,6 +9,7 @@ import com.paboomi.frontend.gui.animation.TreeRouteAnimator;
 import com.paboomi.frontend.gui.components.TextLineNumber;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
@@ -257,15 +258,27 @@ public class PrincipalWindow extends javax.swing.JFrame {
         pnlAST.setLayout(new BorderLayout());
         pnlAST.add(treeScrollPane, BorderLayout.CENTER);
 
-        treeAnimator = new TreeRouteAnimator(treeAST);
+        //treeAnimator = new TreeRouteAnimator(treeAST);
 
         // Configure JTable Errors
+        pnlErrorReport.removeAll();
         pnlErrorReport.setLayout(new BorderLayout());
 
         if(tblErrorReport == null){ tblErrorReport = new JTable(); }
 
+        //Allow resize columns manually
+        tblErrorReport.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+        // Force reordering header
+        tblErrorReport.getTableHeader().setReorderingAllowed(false);
+        tblErrorReport.getTableHeader().setResizingAllowed(true);
+
         JScrollPane errorScrollPane = new JScrollPane(tblErrorReport);
         errorScrollPane.setBorder(null);
+
+        // Ensure the header viewport is always active
+        errorScrollPane.setColumnHeaderView(tblErrorReport.getTableHeader());
+
         pnlErrorReport.add(errorScrollPane, BorderLayout.CENTER);
 
     }
@@ -300,7 +313,7 @@ public class PrincipalWindow extends javax.swing.JFrame {
             jTabbedPane1.setSelectedComponent(pnlAST);
 
             // Start the route animation (node every 400ms)
-            treeAnimator.startAnimation(400);
+            //treeAnimator.startAnimation(400);
 
         } else {
             // Show compilation errors captured by ANTLR4
@@ -337,6 +350,31 @@ public class PrincipalWindow extends javax.swing.JFrame {
         }
 
         tblErrors.setModel(model);
+
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+
+        for (int i = 0; i < tblErrors.getColumnCount(); i++) {
+            tblErrors.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+
+        // Column "Line"
+        tblErrors.getColumnModel().getColumn(0).setPreferredWidth(40);
+        tblErrors.getColumnModel().getColumn(0).setMinWidth(50);
+        tblErrors.getColumnModel().getColumn(0).setMaxWidth(80);
+
+        // Column "Line"
+        tblErrors.getColumnModel().getColumn(1).setPreferredWidth(40);
+        tblErrors.getColumnModel().getColumn(1).setMinWidth(50);
+        tblErrors.getColumnModel().getColumn(1).setMaxWidth(80);
+
+        // Column "Error Description"
+        tblErrors.getColumnModel().getColumn(2).setPreferredWidth(600);
+        tblErrors.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+
+        tblErrors.revalidate();
+        tblErrors.repaint();
+
 
     }
 

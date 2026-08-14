@@ -2,6 +2,10 @@ lexer grammar LatinLexer;
 
 // Rules of tokens (Terminals)
 
+// Comments
+LINE_COMMENT: '//' ~[\r\n]* -> skip;
+BLOCK_COMMENT: '##' (~'#' | '#' ~'#')* '##' -> skip;
+
 // Aritmetic
 PLUS: '+';
 MINUS: '-';
@@ -12,6 +16,7 @@ SPLIT: '/';
 VARIABILES_INIT: 'VARIABILES>';
 MUNERA_INIT: 'MUNERA>';
 MAIOR_INIT: 'MAIOR>';
+FINIS_EOF: 'FINIS';
 
 // Relational
 IDENTIC: '==';
@@ -51,7 +56,7 @@ RIGHT_PAREN: ')';
 ESTO: 'esto';
 NUMERUS: 'numerus';
 TEXTUM: 'textum';
-DECIMALS: 'decimals';
+DECIMALIS: 'decimalis';
 LITTERA: 'littera';
 VERUM: 'verum';
 FALSUS: 'falsus';

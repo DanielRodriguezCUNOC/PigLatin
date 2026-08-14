@@ -6,12 +6,13 @@ options { tokenVocab = LatinLexer; }
 program
        : (VARIABILES_INIT globalDeclarations)?
          (MUNERA_INIT functionDefinitions)?
-         MAIOR_INIT mainInstructions FINIS SEMICOLON? EOF
+         MAIOR_INIT mainInstructions FINIS_EOF SEMICOLON? EOF
        ;
 
 globalDeclarations
     : ( globalDeclaration )*
     ;
+
 // Allows the declaration of global variables, arrays, and structures
 globalDeclaration
     : declaration                                                           #GlobalDeclarationDeclaration
@@ -42,19 +43,11 @@ instruction
 
 // Variable Declaration
 declaration
-    : ESTO ID COLON type typedExpression SEMICOLON                          #DeclarationTyped
-    | ESTO ID COLON expression SEMICOLON                                    #DeclarationInferred
-    ;
-
-typedExpression
-    : NUMERUS numericExpression                                             #TypedExpressionNumerus
-    | DECIMALS numericExpression                                            #TypedExpressionDecimals
-    | TEXTUM stringExpression                                               #TypedExpressionTextum
-    | LITTERA stringExpression                                              #TypedExpressionLittera
+    : ESTO ID (COLON)? (type)? expression SEMICOLON?
     ;
 
 arrayDeclaration
-    : SERIES ID LEFT_CLASP INTEGER RIGHT_CLASP COLON type (LEFT_BRACE arrayValues RIGHT_BRACE)? SEMICOLON
+    : SERIES ID LEFT_CLASP INTEGER RIGHT_CLASP COLON (type)? (LEFT_BRACE arrayValues RIGHT_BRACE)? SEMICOLON?
     ;
 
 arrayValues
@@ -62,20 +55,25 @@ arrayValues
     ;
 
 structDefinition
-    : STRUCTURA ID LEFT_BRACE structFieldDeclaration+ RIGHT_BRACE FINIS SEMICOLON
+    : STRUCTURA ID LEFT_BRACE structFieldDeclaration (structFieldSeparator structFieldDeclaration)* RIGHT_BRACE FINIS SEMICOLON
     ;
 
 structFieldDeclaration
-    : ESTO ID COLON type SEMICOLON
-    | SERIES ID COLON type SEMICOLON
+    : ESTO ID COLON type                                                  #StructFieldDeclarationVariables
+    | SERIES ID COLON type                                                #StructFieldDeclarationSeries
     ;
 
 structLiteral
-    : LEFT_BRACE structFieldInitializer (COMMA structFieldInitializer)* RIGHT_BRACE
+    : (ID)? LEFT_BRACE (structFieldInitializer (COMMA structFieldInitializer)*)? RIGHT_BRACE
     ;
 
 structFieldInitializer
-    : ID COLON value
+    : ID COLON expression
+    ;
+
+structFieldSeparator
+    : COMMA                                             #StructFieldSeparatorComma
+    | SEMICOLON                                         #StructFieldSeparatorSemicolon
     ;
 
 ifStatement
@@ -99,12 +97,12 @@ doWhileStatement
     ;
 
 forStatement
-    : PER LEFT_PAREN forInit SEMICOLON forCondition SEMICOLON forUpdate? RIGHT_PAREN block   #ForStandard
+    : PER LEFT_PAREN forInit SEMICOLON forCondition SEMICOLON forUpdate? RIGHT_PAREN block  #ForStandard
     ;
 
 jumpStatement
-    : PERGE SEMICOLON           #JumpStatementContinue
-    | INTERRUMPE SEMICOLON      #JumpStatementReturn
+    : PERGE SEMICOLON                                                                       #JumpStatementContinue
+    | INTERRUMPE SEMICOLON                                                                  #JumpStatementReturn
     ;
 
 functionDefinition
@@ -137,8 +135,9 @@ varSection
     ;
 
 forInit
-    : ESTO ID COLON type numericExpression                                                  #ForInitWithDeclaration
-    | ID                                                                                    #ForInitWithID
+    : ESTO ID (COLON)? (type)? expression                                       #ForInitWithDeclaration
+    | lvalue ASSIGN expression                                                  #ForInitWithAssign
+    | ID                                                                        #ForInitWithID
     ;
 
 forCondition
@@ -146,18 +145,12 @@ forCondition
     ;
 
 forUpdate
-    : expression
+    : expression                            #ForUpdateExpression
+    | lvalue ASSIGN expression              #ForUpdateLvalue
     ;
 
 block
     : LEFT_BRACE instruction* RIGHT_BRACE
-    ;
-
-value
-    : expression
-    | structLiteral
-    | arrayCreation
-    | arrayLiteral
     ;
 
 arrayCreation
@@ -172,12 +165,15 @@ arrayLiteral
 type
     : NUMERUS                                                               #TypeNumerus
     | TEXTUM                                                                #TypeTextum
-    | DECIMALS                                                              #TypeDecimals
+    | DECIMALIS                                                             #TypeDecimalis
     | LITTERA                                                               #TypeLittera
+    | VERUM                                                                 #TypeVerum
+    | FALSUS                                                                #TypeFalsus
+    | ID                                                                    #TypeID
     ;
 
 readStatement
-    : (ID)? LEERE
+    : lvalue LEERE SEMICOLON?
     ;
 
 
@@ -188,7 +184,7 @@ readStatement
 
 */
 printStatement
-    : IMPREMERE printItem (IMPREMERE printItem)* SEMICOLON
+    : IMPREMERE printItem (IMPREMERE printItem)* SEMICOLON?
     ;
 
 printItem
@@ -214,14 +210,17 @@ lvalueSufix
            }
 */
 assignment
-    : lvalue ASSIGN expression SEMICOLON
+    : lvalue ASSIGN expression SEMICOLON?
     ;
 
 // Aritmetic expression
 expression
-    : booleanExpression
-    | numericExpression
-    | stringExpression
+    : booleanExpression                                                     #ExpressionBooleanExpression
+    | numericExpression                                                     #ExpressionNumericExpression
+    | stringExpression                                                      #ExpressionStringExpression
+    | structLiteral                                                         #ExpressionStructLiteral
+    | arrayCreation                                                         #ExpressionArrayCreation
+    | arrayLiteral                                                          #ExpressionArrayLiteral
     ;
 
 booleanExpression
@@ -237,9 +236,15 @@ booleanAndExpression
     ;
 
 comparisonExpression
-    : numericExpression ( (IDENTIC | DIFF | MINOR | MAJOR | MINORTO | MAJORTO) numericExpression )?
+    : NOT comparisonExpression                                                  #ComparisonExpressionNot
+    | comparisonOperand ( relationalLiteral comparisonOperand )?                #ComparisonExpressionComparisonOperand
+    | LEFT_PAREN booleanExpression RIGHT_PAREN                                  #ComparisonExpressionBooleanExpresion
+    ;
+
+comparisonOperand
+    : numericExpression
     | booleanLiteral
-    | LEFT_PAREN booleanExpression RIGHT_PAREN
+    | stringExpression
     ;
 
 // Numeric Expression
@@ -248,7 +253,7 @@ numericExpression
     ;
 
 additiveExpression
-    : multiplicativeExpression ( (PLUS | MINUS) multiplicativeExpression )*
+    : multiplicativeExpression ( plusMinusExpression multiplicativeExpression )*
     ;
 
 multiplicativeExpression
@@ -267,9 +272,19 @@ addSubExpression
     | SUB                                                                       #AddSubExpressionSub
     ;
 
+incrementDecrementLiteral
+    : ADD                                                                       #IncrementDecrementLiteralAdd
+    | SUB                                                                       #IncrementDecrementLiteralSub
+    ;
+
 multSplitExpression
     : MULT                                                                      #MultSplitExpressionMult
     | SPLIT                                                                     #MultSplitExpressionSplit
+    ;
+
+plusMinusExpression
+    : PLUS                                                                      #PlusMinusExpressionPlus
+    | MINUS                                                                     #PlusMinusExpressionMinus
     ;
 
 // String Expression
@@ -282,28 +297,42 @@ stringAdditiveExpression
     ;
 
 stringAdditiveItem
-    : stringPrimary
-    | numericExpression
+    : stringPrimary                                                             #StringAdditiveItemStringPrimary
+    | numericExpression                                                         #StringAdditiveItemNumericExpression
     ;
 
 stringPrimary
-    : STRING
-    | CHAR
-    | ID (DOT ID | LEFT_CLASP expression RIGHT_CLASP | LEFT_PAREN argumentList? RIGHT_PAREN)*
+    : STRING                                                                    #StringPrimaryString
+    | CHAR                                                                      #StringPrimaryChar
+    | ID (atributeAccessExpresion)*                                             #StringPrimaryAtributeAccessExpression
     ;
 
 primaryNumeric
-    : numericLiteral
-    | ID (DOT ID | LEFT_CLASP expression RIGHT_CLASP | LEFT_PAREN argumentList? RIGHT_PAREN)*
-    | LEFT_PAREN numericExpression RIGHT_PAREN
+    : numericLiteral                                                            #PrimaryNumericNumericLiteral
+    | ID (atributeAccessExpresion)* (incrementDecrementLiteral)?                                           #PrimaryNumericAtributeAccessExpression
+    | LEFT_PAREN numericExpression RIGHT_PAREN                                  #PrimaryNumericNumericExpression
     ;
 numericLiteral
-    : INTEGER
-    | DECIMAL
+    : INTEGER                                                                   #NumericLiteralInteger
+    | DECIMAL                                                                   #NumericLiteralDecimal
     ;
 
 booleanLiteral
-    : VERUM
-    | FALSUS
+    : VERUM                                                                     #BooleanLiteralVerum
+    | FALSUS                                                                    #BooleanLiteralFalsus
+    ;
+relationalLiteral
+    : IDENTIC                                                                   #RelationalLiteralIdentic
+    | DIFF                                                                      #RelationalLiteralDiff
+    | MINOR                                                                     #RelationalLiteralMinor
+    | MAJOR                                                                     #RelationalLiteralMajor
+    | MINORTO                                                                   #RelationalLiteralMinorTo
+    | MAJORTO                                                                   #RelationalLiteralMajorTo
+    ;
+
+atributeAccessExpresion
+    : DOT ID                                                                    #AtributeAccessExpressionDitID
+    | LEFT_CLASP expression RIGHT_CLASP                                         #AtributeAccessExpressionClaspExpression
+    | LEFT_PAREN argumentList? RIGHT_PAREN                                      #AtributeAccessExpressionParenExpression
     ;
 

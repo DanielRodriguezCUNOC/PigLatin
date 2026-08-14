@@ -1,5 +1,5 @@
-// Generated from /home/clare/Documentos/SS 2026/COMPI 2/PROYECTOS/PRACTICA 1/PigLatin/practica-piglatin/src/main/java/com/paboomi/backend/antlr/LatinLexer.g4 by ANTLR 4.13.2
-package com.paboomi.backend.antlr;
+// Generated from LatinLexer.g4 by ANTLR 4.13.2
+package com.paboomi.backend.antlr.generated;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
