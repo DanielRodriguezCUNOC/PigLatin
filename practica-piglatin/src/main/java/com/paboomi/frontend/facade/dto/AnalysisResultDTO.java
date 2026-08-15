@@ -23,7 +23,7 @@ public class AnalysisResultDTO {
     private final boolean isValid;
     private final TreeModel treeModel;
     private final List<CustomErrorDTO> errorsList;
-    private final List<ParserStackStateDTO> parserStackStateList;
+    private final List<ParserStackStateDTO> stackStateList;
 
     public AnalysisResultDTO(boolean isValid,
                              DefaultTreeModel treeModel,
@@ -32,7 +32,7 @@ public class AnalysisResultDTO {
         this.isValid = isValid;
         this.treeModel = treeModel;
         this.errorsList = errorsList !=  null ? errorsList : Collections.emptyList();
-        this.parserStackStateList = parserStackStateList != null ? parserStackStateList : Collections.emptyList();
+        this.stackStateList = parserStackStateList != null ? parserStackStateList : Collections.emptyList();
     }
 
 }
