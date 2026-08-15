@@ -28,7 +28,8 @@ public class FacadeCompilator {
         return new AnalysisResultDTO(
                 parserResult.getErrorsList().isEmpty(),
                 swingModel,
-                parserResult.getErrorsList()
+                parserResult.getErrorsList(),
+                parserResult.getStackStateDTO()
         );
 
     }
