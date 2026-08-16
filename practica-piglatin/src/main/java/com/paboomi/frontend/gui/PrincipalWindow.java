@@ -1,5 +1,6 @@
 package com.paboomi.frontend.gui;
 
+import com.paboomi.backend.antlr.generated.LatinParser;
 import com.paboomi.backend.dtos.CustomErrorDTO;
 import com.paboomi.backend.dtos.ParserStackStateDTO;
 import com.paboomi.backend.services.ServiceAnalyzer;
@@ -7,13 +8,14 @@ import com.paboomi.backend.services.TreeMapperService;
 import com.paboomi.frontend.facade.FacadeCompilator;
 import com.paboomi.frontend.facade.dto.AnalysisResultDTO;
 import com.paboomi.frontend.gui.animation.TreeRouteAnimator;
+import com.paboomi.frontend.gui.components.RoundedPanel;
 import com.paboomi.frontend.gui.components.TextLineNumber;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -30,6 +32,7 @@ public class PrincipalWindow extends javax.swing.JFrame {
     private List<ParserStackStateDTO> stackState = new ArrayList<>();
     private int currentStackStep = -1;
     private JPanel stackBlocksPanel;
+    private static final Set<String> NON_TERMINALS = new HashSet<>(Arrays.asList(LatinParser.ruleNames));
 
     /**
      * Creates new form PrincipalWindow
@@ -291,29 +294,22 @@ public class PrincipalWindow extends javax.swing.JFrame {
         pnlErrorReport.add(errorScrollPane, BorderLayout.CENTER);
 
         //* Stack Visualizer
-        //*
         stackBlocksPanel = new JPanel();
-        stackBlocksPanel.setLayout(new BoxLayout(
-                stackBlocksPanel, BoxLayout.Y_AXIS));
-        stackBlocksPanel.setBackground(new Color(30, 30, 46));
-        stackBlocksPanel.setBorder(BorderFactory.createEmptyBorder(
-                10, 10, 10,10
-        ));
+        stackBlocksPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 15));
+        stackBlocksPanel.setBackground(new Color(255, 255, 255));
+        stackBlocksPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JScrollPane stackScroll = new JScrollPane(stackBlocksPanel);
-        stackScroll.setBorder(null);
+        stackScroll.setBorder(BorderFactory.createLineBorder(new Color(200, 180, 140), 2));
+        stackScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-        stackScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-        // Place the visualizer in the center of the stack panel
         pnlStackViewer.add(stackScroll, BorderLayout.CENTER);
 
-        // We style the log below
         jTextArea1.setBackground(new Color(24, 24, 37));
-        jTextArea1.setForeground(new Color(205, 214, 244));
+        jTextArea1.setForeground(new Color(150, 214, 244));
         jTextArea1.setFont(codeFont);
         jTextArea1.setEditable(false);
-        jTextArea1.setText("Press Compile to generate stack trace");
+        jTextArea1.setText("Press Compile to generate stack trace...");
 
     }
 
@@ -325,53 +321,53 @@ public class PrincipalWindow extends javax.swing.JFrame {
             return;
         }
 
-        // Execute analyze with facade
+        //* Execute analyze with facade
         AnalysisResultDTO result = facade.codeAnalyze(code);
 
         if (result.isValid()) {
             jTextArea2.setText(">>> Compilation finished successfully. No syntax errors.\n");
             lblStateBar.setText(" Status: Success | Code parsed without errors ");
 
-            // Clean errors table
+            //* Clean errors table
             renderErrorsTable(List.of(), tblErrorReport);
 
-            // Assign the new generated tree model to the JTree.
+            //* Assign the new generated tree model to the JTree.
             treeAST.setModel(result.getTreeModel());
 
-            // Expand all branches
+            //* Expand all branches
             for (int i = 0; i < treeAST.getRowCount(); i++) {
                 treeAST.expandRow(i);
             }
 
-            // Dynamically switch to the AST tab.
+            //* Dynamically switch to the AST tab.
             jTabbedPane1.setSelectedComponent(pnlAST);
 
             loadStackStates(result.getStackStateList());
 
-            // Start the route animation (node every 400ms)
+            //* Start the route animation (node every 400ms)
             //treeAnimator.startAnimation(400);
 
         } else {
-            // Show compilation errors captured by ANTLR4
+            //* Show compilation errors captured by ANTLR4
             jTextArea2.setText(">>> Compilation failed with " +
                     result.getErrorsList().size() +
                     " error(s).\nCheck the Error's Report tab");
             lblStateBar.setText(" Status: Failed | Errors found during compilation ");
 
-            // Renderer errors in jtable
+            //* Renderer errors in jtable
             renderErrorsTable(result.getErrorsList(), tblErrorReport);
 
-            // Switch to the Error's Report tab automatically
+            //* Switch to the Error's Report tab automatically
             jTabbedPane1.setSelectedComponent(pnlErrorReport);
             loadStackStates(result.getStackStateList());
             }
     }
 
     public void renderErrorsTable(List<CustomErrorDTO> errors, JTable tblErrors) {
-        // Define columns
+        //* Define columns
         String[] columnNames = {"Line", "Column", "Error Description"};
 
-        // Create table model non-editable
+        //* Create table model non-editable
         DefaultTableModel model = new DefaultTableModel(columnNames, 0){
           @Override
           public boolean isCellEditable(int row, int column) {return false;}
@@ -395,17 +391,17 @@ public class PrincipalWindow extends javax.swing.JFrame {
             tblErrors.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
 
-        // Column "Line"
+        //* Column "Line"
         tblErrors.getColumnModel().getColumn(0).setPreferredWidth(40);
         tblErrors.getColumnModel().getColumn(0).setMinWidth(50);
         tblErrors.getColumnModel().getColumn(0).setMaxWidth(80);
 
-        // Column "Line"
+        //* Column "Line"
         tblErrors.getColumnModel().getColumn(1).setPreferredWidth(40);
         tblErrors.getColumnModel().getColumn(1).setMinWidth(50);
         tblErrors.getColumnModel().getColumn(1).setMaxWidth(80);
 
-        // Column "Error Description"
+        //* Column "Error Description"
         tblErrors.getColumnModel().getColumn(2).setPreferredWidth(600);
         tblErrors.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
@@ -440,71 +436,122 @@ public class PrincipalWindow extends javax.swing.JFrame {
 
     private void showStackStep(int step) {
         this.currentStackStep = step;
-        ParserStackStateDTO state = stackState.get(step);
 
-        // Clear previous blocks
+        //* Clear principal panel
         stackBlocksPanel.removeAll();
 
-        // Trace title
-        JLabel header = new JLabel("Step " + state.step() + "  [" + state.operation() + "]", SwingConstants.CENTER);
-        header.setForeground(new Color(245, 194, 231)); // rosa
-        header.setFont(codeFont.deriveFont(Font.BOLD, 13f));
-        header.setAlignmentX(Component.CENTER_ALIGNMENT);
-        stackBlocksPanel.add(header);
-        stackBlocksPanel.add(Box.createRigidArea(new Dimension(0, 12)));
-
-        // Draw each rule in the stack as a block
-        for (String rule : state.ruleStack()) {
-            JLabel block = createStackBlock(rule, new Color(249, 226, 175)); // amarillo pila
-            stackBlocksPanel.add(block);
-            stackBlocksPanel.add(Box.createRigidArea(new Dimension(0, 4)));
-        }
-
-        // If it is CONSUME, display the token at the very top in blue.
-        if ("CONSUME".equals(state.operation())) {
-            JLabel tokenBlock = createStackBlock("TOKEN: " + state.detail(), new Color(137, 180, 250));
-            stackBlocksPanel.add(Box.createRigidArea(new Dimension(0, 6)));
-            stackBlocksPanel.add(tokenBlock);
-        }
-
-        // If it is ACCEPT, display special indicator
-        if ("ACCEPT".equals(state.operation())) {
-            JLabel acceptBlock = createStackBlock("ACCEPT", new Color(166, 227, 161));
-            stackBlocksPanel.add(Box.createRigidArea(new Dimension(0, 6)));
-            stackBlocksPanel.add(acceptBlock);
+        //* Renderize from step 0 has to current step
+        for (int i = 0; i <= step; i++) {
+            ParserStackStateDTO state = stackState.get(i);
+            JPanel stateColumn = buildStateColumn(state);
+            stackBlocksPanel.add(stateColumn);
         }
 
         stackBlocksPanel.revalidate();
         stackBlocksPanel.repaint();
 
-        // Update log
-        jTextArea1.setText(state.getLogMessage() + "\n\nLine: " + state.tokenLine() + "  Col: " + state.tokenColumn());
+        //* Auto-scroll horizontal when new column appears
+        SwingUtilities.invokeLater(() ->{
+            //* Get the JScrollPane with the stacksBlockPanel
+            Container parent = stackBlocksPanel.getParent();
+            if(parent instanceof JViewport){
+                JScrollPane scrollPane = (JScrollPane) parent.getParent();
+                JScrollBar horizontalBar = scrollPane.getHorizontalScrollBar();
+                //* Move bar tho maximus value
+                horizontalBar.setValue(horizontalBar.getMaximum());
+            }
+        });
 
-        // Buttons
+        //* Accumulated Log
+        StringBuilder log = new StringBuilder();
+        for (int i = 0; i <= step; i++) {
+            ParserStackStateDTO s = stackState.get(i);
+            log.append(String.format("%d. [%s] %s%n", s.step(), s.operation(), s.detail()));
+        }
+        jTextArea1.setText(log.toString());
+
+        //* Buttons
         jButton1.setEnabled(step > 0);
         jButton2.setEnabled(step < stackState.size() - 1);
 
-        // Highlighted line in the editor
-        if (state.tokenLine() > 0) {
-            highlightLineInEditor(state.tokenLine());
+        if (stackState.get(step).tokenLine() > 0) {
+            highlightLineInEditor(stackState.get(step).tokenLine());
         }
     }
 
-    private JLabel createStackBlock(String text, Color bgColor) {
-        JLabel label = new JLabel(text, SwingConstants.CENTER);
-        label.setOpaque(true);
-        label.setBackground(bgColor);
-        label.setForeground(Color.BLACK);
-        label.setFont(codeFont);
-        label.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(69, 71, 90), 1),
-                BorderFactory.createEmptyBorder(8, 16, 8, 16)
-        ));
-        label.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        label.setAlignmentX(Component.CENTER_ALIGNMENT);
-        return label;
+    private JPanel buildStateColumn(ParserStackStateDTO state) {
+
+        //* Yellow Contaniner
+        RoundedPanel column = new RoundedPanel(new BorderLayout(), 15, new Color(254, 245, 215));
+        column.setPreferredSize(new Dimension(85, 300));
+        column.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
+
+        //* Header
+        JLabel header = new JLabel(String.valueOf(state.step()), SwingConstants.CENTER);
+        header.setFont(codeFont.deriveFont(Font.BOLD, 14f));
+        header.setForeground(Color.BLACK);
+        column.add(header, BorderLayout.NORTH);
+
+        //* Central container with stack elements
+        JPanel stackElements = new JPanel();
+        stackElements.setLayout(new BoxLayout(stackElements, BoxLayout.Y_AXIS));
+        stackElements.setOpaque(false);
+
+        //* Push down the elements
+        stackElements.add(Box.createVerticalGlue());
+
+        List<String> stack = state.ruleStack();
+        if (stack.isEmpty()) {
+            JLabel empty = new JLabel("<html><center>Stack<br>Void</center></html>", SwingConstants.CENTER);
+            empty.setFont(codeFont.deriveFont(Font.BOLD, 12f));
+            empty.setForeground(Color.BLACK);
+            stackElements.add(empty);
+            stackElements.add(Box.createVerticalGlue());
+        } else {
+            //* Draw from top to bottom
+            for (int i = stack.size() - 1; i >= 0; i--) {
+                String symbol = stack.get(i);
+
+                //* Blue for non-terminals
+                //* Pink for terminals
+                Color bg = isNonTerminal(symbol) ? new Color(208, 230, 255) : new Color(248, 198, 203);
+                RoundedPanel block = createRoundedLabel(symbol, bg);
+                stackElements.add(block);
+                stackElements.add(Box.createRigidArea(new Dimension(0, 5)));
+            }
+        }
+        column.add(stackElements, BorderLayout.CENTER);
+
+        //* Base Operation (Verde para shift, Morado para reduce)
+        //* Green for SHIFT
+        //* Purple for REDUCE
+        boolean isShift = state.operation().equalsIgnoreCase("SHIFT");
+        Color opColor = isShift ? new Color(200, 235, 200) : new Color(225, 205, 235);
+        String labelText = isShift ? "shift " + state.detail() : "reduce " + state.detail();
+
+        RoundedPanel opBlock = createRoundedLabel(labelText, opColor);
+        //* Resize operation block
+        opBlock.setPreferredSize(new Dimension(75, 25));
+        opBlock.setMaximumSize(new Dimension(75, 25));
+        column.add(opBlock, BorderLayout.SOUTH);
+
+        return column;
     }
 
+    //* This method configure de labels for the stack trace columns
+    private RoundedPanel createRoundedLabel(String text, Color bgColor) {
+        //* individual block with edges
+        RoundedPanel panel = new RoundedPanel(new BorderLayout(), 8, bgColor);
+        panel.setMaximumSize(new Dimension(75, 35));
+        panel.setPreferredSize(new Dimension(75, 35));
+
+        JLabel label = new JLabel(text, SwingConstants.CENTER);
+        label.setFont(codeFont.deriveFont(Font.PLAIN, 12f));
+        label.setForeground(Color.BLACK);
+        panel.add(label, BorderLayout.CENTER);
+
+        return panel;
+    }
     private void clearStackView() {
         stackBlocksPanel.removeAll();
         JLabel empty = new JLabel("Void Stack", SwingConstants.CENTER);
@@ -527,6 +574,10 @@ public class PrincipalWindow extends javax.swing.JFrame {
             txtACodeEditor.getCaret().setSelectionVisible(true);
         } catch (Exception ignored) {
         }
+    }
+
+    private boolean isNonTerminal(String symbol) {
+        return NON_TERMINALS.contains(symbol);
     }
 
 

@@ -16,21 +16,21 @@ public class ServiceAnalyzer {
     public ParserResultDTO executeAnalysis(String sourceCode) {
         CustomErrorListener errorListener = new CustomErrorListener();
 
-        // Create CharStream and Lexer
+        //* Create CharStream and Lexer
         LatinLexer lexer = new LatinLexer(CharStreams.fromString(sourceCode));
         lexer.removeErrorListeners();
         lexer.addErrorListener(errorListener);
 
-        // Create TokenStream and Parser
+        //* Create TokenStream and Parser
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         LatinParser parser = new LatinParser(tokens);
         parser.removeErrorListeners();
         parser.addErrorListener(errorListener);
         ParseTraceListener trace = new ParseTraceListener(parser);
-        // This is for real time
+
+        //* This is for real time
         parser.addParseListener(trace);
 
-        // Start parsing from your root rule (replace 'startRule' with your actual root rule, e.g., 'program')
         ParseTree parseTree = parser.program();
         trace.addAcceptState();
 
