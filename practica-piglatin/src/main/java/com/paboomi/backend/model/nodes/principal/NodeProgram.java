@@ -1,18 +1,25 @@
 package com.paboomi.backend.model.nodes.principal;
 
+import com.paboomi.backend.model.nodes.declaration.NodeDeclaration;
 import com.paboomi.backend.model.visitor.Visitor;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+/**
+ * Represent the structure of the program
+ */
 
 @Getter
 @Setter
 public class NodeProgram extends ASTNode{
 
-    private List<ASTNode> globalDeclarations;
+    //* This represents the section VARIABILES>
+    private List<NodeDeclaration> globalDeclarations;
+    //* This represents the section MUNERA>
     private List<ASTNode> functionDefinitions;
+    //* This represents the section MAIOR>
     private List<ASTNode> mainInstructions;
 
     public NodeProgram() {
@@ -23,7 +30,7 @@ public class NodeProgram extends ASTNode{
         this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), line, column);
     }
 
-    public NodeProgram(List<ASTNode> globalDeclarations,
+    public NodeProgram(List<NodeDeclaration> globalDeclarations,
                        List<ASTNode> functionDefinitions,
                        List<ASTNode> mainInstructions,
                        int line, int column) {
@@ -33,7 +40,7 @@ public class NodeProgram extends ASTNode{
         this.mainInstructions = mainInstructions != null ? mainInstructions : new ArrayList<>();
     }
 
-   public void addGlobalDeclaration(ASTNode declaration) {
+   public void addGlobalDeclaration(NodeDeclaration declaration) {
         if(declaration != null) this.globalDeclarations.add(declaration);
    }
 
