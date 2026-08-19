@@ -7,6 +7,8 @@ import com.paboomi.backend.model.nodes.expression.*;
 import com.paboomi.backend.model.nodes.function.NodeFunction;
 import com.paboomi.backend.model.nodes.function.NodeParameter;
 import com.paboomi.backend.model.nodes.instruction.*;
+import com.paboomi.backend.model.nodes.lvalue.NodeFieldAccess;
+import com.paboomi.backend.model.nodes.lvalue.NodeIndexAccess;
 import com.paboomi.backend.model.nodes.lvalue.NodeLvalue;
 import com.paboomi.backend.model.nodes.principal.NodeProgram;
 
@@ -48,5 +50,7 @@ public interface Visitor<T> {
         T visitArrayCreation(NodeArrayCreation n);
         T visitArrayLiteral(NodeArrayLiteral n);
         T visitLvalue(NodeLvalue n);
+        T visitFieldValue(NodeFieldAccess n);
+
 
 }

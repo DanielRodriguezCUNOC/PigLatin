@@ -13,9 +13,9 @@ import java.util.List;
 public class NodeStructDefinition extends NodeDeclaration {
 
     //* The identifier of struct
-    private String structName;
+    private final String structName;
     //* List of fields that belong to this struct
-    private List<ASTNode> fields;
+    private final List<ASTNode> fields;
 
     public NodeStructDefinition() {
         this(null, new ArrayList<>(), 0, 0);
@@ -33,20 +33,17 @@ public class NodeStructDefinition extends NodeDeclaration {
 
     //* Adds a field to the struct
     public void addField(ASTNode field){
-        if (this.fields == null) {
-            this.fields = new ArrayList<>();
-        }
         this.fields.add(field);
     }
 
     //* Checks if the struct has any fields defined
     public boolean hasFields(){
-        return fields != null && !fields.isEmpty();
+        return !fields.isEmpty();
     }
 
     //* Gets the number of fields in this struct
     public int getFieldCount(){
-        return fields != null ? fields.size() : 0;
+        return fields.size();
     }
 
 
@@ -61,14 +58,12 @@ public class NodeStructDefinition extends NodeDeclaration {
                 ASTNode field = fields.get(i);
 
                 //* check if field is a variable declaration
-                if(field instanceof NodeVariableDeclaration){
-                    NodeVariableDeclaration varDecl = (NodeVariableDeclaration) field;
+                if(field instanceof NodeVariableDeclaration varDecl){
                     sb.append("esto ").append(varDecl.getIdentifier()).
                             append(" : ").append(varDecl.getType());
                 }
                 //* Check if the field iss an array declaration
-                else if (field instanceof NodeArrayDeclaration) {
-                    NodeArrayDeclaration arrayDecl = (NodeArrayDeclaration) field;
+                else if (field instanceof NodeArrayDeclaration arrayDecl) {
 
                     sb.append("series ").append(arrayDecl.getIdentifier()).
                             append("[").append(arrayDecl.getSize()).
