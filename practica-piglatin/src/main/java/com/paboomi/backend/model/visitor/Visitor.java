@@ -50,7 +50,6 @@ public interface Visitor<T> {
         T visitArrayCreation(NodeArrayCreation n);
         T visitArrayLiteral(NodeArrayLiteral n);
         T visitLvalue(NodeLvalue n);
-        T visitFieldValue(NodeFieldAccess n);
-
-
+        T visitFieldAccess(NodeFieldAccess n);
+        T visitStructFieldInitializer(NodeStructFieldInitializer n);
 }

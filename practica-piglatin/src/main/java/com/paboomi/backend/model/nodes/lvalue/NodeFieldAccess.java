@@ -42,6 +42,6 @@ public class NodeFieldAccess extends ASTNode {
 
     @Override
     public <T> T accept(Visitor<T> visitor) {
-        return visitor.visitFieldValue(this);
+        return visitor.visitFieldAccess(this);
     }
 }
