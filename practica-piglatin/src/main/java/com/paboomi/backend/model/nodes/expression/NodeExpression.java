@@ -1,4 +1,4 @@
 package com.paboomi.backend.model.nodes.expression;
 
-public class NodeIndexAccess {
+public class NodeExpression {
 }

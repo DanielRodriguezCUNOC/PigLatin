@@ -1,17 +1,23 @@
 package com.paboomi.backend.model.nodes.declaration;
 
+import com.paboomi.backend.model.nodes.expression.NodeExpression;
 import com.paboomi.backend.model.nodes.principal.ASTNode;
 import com.paboomi.backend.model.visitor.Visitor;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Represent a variable declaration production:
+ * ESTO ID (: tipo)? expresion
+ */
 @Getter
 @Setter
-public class NodeVariableDeclaration extends ASTNode {
+public class NodeVariableDeclaration extends NodeDeclaration {
 
     private String identifier;
     private String type;
-    private ASTNode initializer;
+    //* initialization expression
+    private NodeExpression initializer;
 
     public NodeVariableDeclaration(){
         this(null, null, null, 0, 0);
@@ -23,7 +29,7 @@ public class NodeVariableDeclaration extends ASTNode {
 
     public NodeVariableDeclaration(String identifier,
                                    String type,
-                                   ASTNode initializer,
+                                   NodeExpression initializer,
                                    int line, int column) {
         super(line, column);
         this.identifier = identifier;
