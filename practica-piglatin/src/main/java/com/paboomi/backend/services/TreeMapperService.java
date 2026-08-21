@@ -1,6 +1,7 @@
 package com.paboomi.backend.services;
 
 import com.paboomi.backend.dtos.ParserResultDTO;
+import com.paboomi.backend.model.nodes.principal.NodeProgram;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -8,6 +9,16 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
 public class TreeMapperService {
+
+
+
+    public NodeProgram buildAST(ParserResultDTO parserResult) {
+
+        if (parserResult == null || parserResult.getParseTree() == null) {
+            return null;
+        }
+        return null;
+    }
 
     /**
      * Converts a ParserResultDTO containing an ANTLR ParseTree to a Swing DefaultTreeModel.

@@ -1,8 +1,16 @@
 package com.paboomi.frontend.facade;
 
+import com.paboomi.backend.dtos.CustomErrorDTO;
+import com.paboomi.backend.dtos.ParserResultDTO;
+import com.paboomi.backend.model.nodes.principal.NodeProgram;
+import com.paboomi.backend.semantic.analysis.SemanticAnalyzer;
 import com.paboomi.backend.services.ServiceAnalyzer;
 import com.paboomi.backend.services.TreeMapperService;
 import com.paboomi.frontend.facade.dto.AnalysisResultDTO;
+
+import javax.swing.tree.DefaultTreeModel;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -23,12 +31,26 @@ public class FacadeCompilator {
      *Simplified Metod for GUI. Hides the ANTLR4 Complexity
      */
     public AnalysisResultDTO codeAnalyze(String sourceCode){
-        var parserResult = serviceAnalyzer.executeAnalysis(sourceCode);
-        var swingModel = treeMapperService.swingFormatConversion(parserResult);
+        ParserResultDTO parserResult = serviceAnalyzer.executeAnalysis(sourceCode);
+        List<CustomErrorDTO> allErrors = new ArrayList<>();
+        allErrors.addAll(parserResult.getErrorsList());
+
+        NodeProgram ast = treeMapperService.buildAST(parserResult);
+
+        if (ast != null && parserResult.getErrorsList().isEmpty()){
+            SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+            List<CustomErrorDTO> semanticErrors = semanticAnalyzer.analyze(ast);
+            allErrors.addAll(semanticErrors);
+        }
+
+        DefaultTreeModel swingModel = treeMapperService.swingFormatConversion(parserResult);
+
+        boolean isValid = allErrors.isEmpty();
+
         return new AnalysisResultDTO(
-                parserResult.getErrorsList().isEmpty(),
+                isValid,
                 swingModel,
-                parserResult.getErrorsList(),
+                allErrors,
                 parserResult.getStackStateDTO()
         );
 
