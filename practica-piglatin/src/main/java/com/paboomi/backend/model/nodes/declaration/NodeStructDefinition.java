@@ -2,6 +2,8 @@ package com.paboomi.backend.model.nodes.declaration;
 
 import com.paboomi.backend.model.nodes.principal.ASTNode;
 import com.paboomi.backend.model.visitor.Visitor;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +12,8 @@ import java.util.List;
  * This class allows the struct definition production:
  * STRUCTURA ID { structFieldDeclaration (structFieldSeparator structFieldDeclaration)* } FINIS ;
  */
+@Getter
+@Setter
 public class NodeStructDefinition extends NodeDeclaration {
 
     //* The identifier of struct

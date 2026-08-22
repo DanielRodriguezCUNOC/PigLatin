@@ -2,6 +2,7 @@ package com.paboomi.backend.services;
 
 import com.paboomi.backend.dtos.ParserResultDTO;
 import com.paboomi.backend.model.nodes.principal.NodeProgram;
+import com.paboomi.backend.model.visitor.ASTBuilder;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -17,7 +18,9 @@ public class TreeMapperService {
         if (parserResult == null || parserResult.getParseTree() == null) {
             return null;
         }
-        return null;
+        ASTBuilder builder = new ASTBuilder();
+
+        return (NodeProgram) builder.visit(parserResult.getParseTree());
     }
 
     /**

@@ -11,7 +11,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class NodeNumericExpression extends ASTNode {
+public class NodeNumericExpression extends NodeExpression {
 
     //* The numeric expression AST node
     private ASTNode expression;

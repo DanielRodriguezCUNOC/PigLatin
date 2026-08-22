@@ -1,4 +1,4 @@
-package com.paboomi.backend.model.nodes.expression;
+package com.paboomi.backend.model.nodes.literal;
 
 import com.paboomi.backend.model.nodes.principal.ASTNode;
 import com.paboomi.backend.model.visitor.Visitor;
