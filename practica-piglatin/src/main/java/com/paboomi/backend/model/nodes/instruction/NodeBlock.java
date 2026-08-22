@@ -2,6 +2,8 @@ package com.paboomi.backend.model.nodes.instruction;
 
 import com.paboomi.backend.model.nodes.principal.ASTNode;
 import com.paboomi.backend.model.visitor.Visitor;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +12,8 @@ import java.util.List;
  * Represents a block of instructions production:
  * LEFT_BRACE instruction* RIGHT_BRACE
  */
+@Getter
+@Setter
 public class NodeBlock extends ASTNode {
 
     //* List of instructions contained in this block

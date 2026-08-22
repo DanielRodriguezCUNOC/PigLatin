@@ -11,7 +11,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class NodeBooleanExpression extends ASTNode {
+public class NodeBooleanExpression extends NodeExpression {
 
     //* Boolean expression AST node
     private ASTNode expression;

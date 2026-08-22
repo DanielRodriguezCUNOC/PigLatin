@@ -1,7 +1,9 @@
-package com.paboomi.backend.model.nodes.expression;
+package com.paboomi.backend.model.nodes.literal;
 
 import com.paboomi.backend.model.nodes.principal.ASTNode;
 import com.paboomi.backend.model.visitor.Visitor;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +12,8 @@ import java.util.List;
  * Represents an array literal expression production:
  * { expression (COMMA expression)* }
  */
-
+@Getter
+@Setter
 public class NodeArrayLiteral extends ASTNode {
 
     //* Lisst of values in the array literal
