@@ -3,6 +3,10 @@ package com.paboomi.frontend.gui;
 import com.paboomi.backend.antlr.generated.LatinParser;
 import com.paboomi.backend.dtos.CustomErrorDTO;
 import com.paboomi.backend.dtos.ParserStackStateDTO;
+import com.paboomi.backend.semantic.symboltable.Scope;
+import com.paboomi.backend.semantic.symboltable.symbols.Symbol;
+import com.paboomi.backend.semantic.types.StructType;
+import com.paboomi.backend.semantic.types.TypeTable;
 import com.paboomi.backend.services.ServiceAnalyzer;
 import com.paboomi.backend.services.TreeMapperService;
 import com.paboomi.frontend.facade.FacadeCompilator;
@@ -33,6 +37,8 @@ public class PrincipalWindow extends javax.swing.JFrame {
     private int currentStackStep = -1;
     private JPanel stackBlocksPanel;
     private static final Set<String> NON_TERMINALS = new HashSet<>(Arrays.asList(LatinParser.ruleNames));
+    private JTable tblSymbols;
+    private JTable tblTypes;
 
     /**
      * Creates new form PrincipalWindow
@@ -272,23 +278,48 @@ public class PrincipalWindow extends javax.swing.JFrame {
 
         //treeAnimator = new TreeRouteAnimator(treeAST);
 
-        // Configure JTable Errors
+        //* Configure pnlSymbolTable
+        pnlSymbolTable.removeAll();
+        pnlSymbolTable.setLayout(new BorderLayout());
+
+        tblSymbols = new JTable();
+        tblTypes = new JTable();
+
+        //* Prevent columns from being reordered
+        tblSymbols.getTableHeader().setReorderingAllowed(false);
+        tblTypes.getTableHeader().setReorderingAllowed(false);
+
+        JScrollPane scrollSymbols = new JScrollPane(tblSymbols);
+        scrollSymbols.setBorder(BorderFactory.createTitledBorder("Symbol Table (Variables, Functions)"));
+
+        JScrollPane scrollTypes = new JScrollPane(tblTypes);
+        scrollTypes.setBorder(BorderFactory.createTitledBorder("Type Table (Primitives & Structs)"));
+
+        JSplitPane splitTables = new JSplitPane(JSplitPane.VERTICAL_SPLIT, scrollSymbols, scrollTypes);
+
+        //* Height of the division
+        splitTables.setDividerLocation(350);
+        splitTables.setBorder(null);
+
+        pnlSymbolTable.add(splitTables, BorderLayout.CENTER);
+
+        //* Configure JTable Errors
         pnlErrorReport.removeAll();
         pnlErrorReport.setLayout(new BorderLayout());
 
         if(tblErrorReport == null){ tblErrorReport = new JTable(); }
 
-        //Allow resize columns manually
+        //* Allow resize columns manually
         tblErrorReport.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
-        // Force reordering header
+        //* Force reordering header
         tblErrorReport.getTableHeader().setReorderingAllowed(false);
         tblErrorReport.getTableHeader().setResizingAllowed(true);
 
         JScrollPane errorScrollPane = new JScrollPane(tblErrorReport);
         errorScrollPane.setBorder(null);
 
-        // Ensure the header viewport is always active
+        //* Ensure the header viewport is always active
         errorScrollPane.setColumnHeaderView(tblErrorReport.getTableHeader());
 
         pnlErrorReport.add(errorScrollPane, BorderLayout.CENTER);
@@ -347,6 +378,8 @@ public class PrincipalWindow extends javax.swing.JFrame {
             //* Start the route animation (node every 400ms)
             //treeAnimator.startAnimation(400);
 
+            renderSymbolAndTypeTables(result);
+
         } else {
             //* Show compilation errors captured by ANTLR4
             jTextArea2.setText(">>> Compilation failed with " +
@@ -356,6 +389,8 @@ public class PrincipalWindow extends javax.swing.JFrame {
 
             //* Renderer errors in jtable
             renderErrorsTable(result.getErrorsList(), tblErrorReport);
+
+            renderSymbolAndTypeTables(result);
 
             //* Switch to the Error's Report tab automatically
             jTabbedPane1.setSelectedComponent(pnlErrorReport);
@@ -409,6 +444,50 @@ public class PrincipalWindow extends javax.swing.JFrame {
         tblErrors.repaint();
 
 
+    }
+
+    private void renderSymbolAndTypeTables(AnalysisResultDTO result) {
+        if (result.getSymbolTable() == null || result.getTypeTable() == null) return;
+
+        //* --- Render Symbol Table ---
+        String[] symCols = {"Scope Level", "Name", "Details"};
+        DefaultTableModel symModel = new DefaultTableModel(symCols, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+
+        //* Iterate from the local to the global level.
+        int level = result.getSymbolTable().getScopeDepth() - 1;
+        for (Scope scope : result.getSymbolTable().getAllScopes()) {
+
+            for (Symbol sym : scope.getSymbols().values()) {
+                Object[] rowData = {
+                        level, //* Scope level
+                        sym.getName(),
+                        sym.toString() //* Symbol details
+                };
+                symModel.addRow(rowData);
+            }
+            level--;
+        }
+        tblSymbols.setModel(symModel);
+
+        // --- Render Type Table ---
+        String[] typeCols = {"Type Name", "Category", "Details"};
+        DefaultTableModel typeModel = new DefaultTableModel(typeCols, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+
+        TypeTable typeTable = result.getTypeTable();
+        for (String typeName : typeTable.getAllTypeNames()) {
+            StructType struct = typeTable.getStruct(typeName);
+            String category = (struct == null) ? "Primitive" : "Struct";
+            String details = (struct == null) ? "Built-in type" : struct.toString();
+
+            typeModel.addRow(new Object[]{typeName, category, details});
+        }
+        tblTypes.setModel(typeModel);
     }
 
     //* Stack Visualizer Methods
