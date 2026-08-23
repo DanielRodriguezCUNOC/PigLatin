@@ -52,7 +52,7 @@ public class TypeTable {
     }
 
     /**
-     * Verified if is an struct defined for by user.
+     * Verified if is a struct defined for by user.
      */
     public boolean isStruct(String typeName) {
         return exists(typeName) && types.get(typeName) != null;

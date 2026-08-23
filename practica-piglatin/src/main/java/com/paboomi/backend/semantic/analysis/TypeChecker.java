@@ -19,6 +19,8 @@ import com.paboomi.backend.semantic.symboltable.SymbolTable;
 import com.paboomi.backend.semantic.symboltable.symbols.*;
 import com.paboomi.backend.semantic.types.StructType;
 import com.paboomi.backend.semantic.types.TypeTable;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -37,6 +39,8 @@ import java.util.Deque;
  * This class reconstructs its own Symbol Table while traversing the AST,
  * allowing identifier types to be resolved at any nesting level.
  */
+@Getter
+@Setter
 public class TypeChecker implements Visitor<String> {
 
     private final SymbolTable symbolTable;

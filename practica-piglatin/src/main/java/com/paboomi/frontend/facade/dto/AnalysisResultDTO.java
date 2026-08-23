@@ -2,6 +2,8 @@ package com.paboomi.frontend.facade.dto;
 
 import com.paboomi.backend.dtos.CustomErrorDTO;
 import com.paboomi.backend.dtos.ParserStackStateDTO;
+import com.paboomi.backend.semantic.symboltable.SymbolTable;
+import com.paboomi.backend.semantic.types.TypeTable;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,15 +26,20 @@ public class AnalysisResultDTO {
     private final TreeModel treeModel;
     private final List<CustomErrorDTO> errorsList;
     private final List<ParserStackStateDTO> stackStateList;
+    private final SymbolTable symbolTable;
+    private final TypeTable typeTable;
 
     public AnalysisResultDTO(boolean isValid,
                              DefaultTreeModel treeModel,
                              List<CustomErrorDTO> errorsList,
-                             List<ParserStackStateDTO> parserStackStateList) {
+                             List<ParserStackStateDTO> parserStackStateList,
+                             SymbolTable symbolTable, TypeTable typeTable) {
         this.isValid = isValid;
         this.treeModel = treeModel;
         this.errorsList = errorsList !=  null ? errorsList : Collections.emptyList();
         this.stackStateList = parserStackStateList != null ? parserStackStateList : Collections.emptyList();
+        this.symbolTable = symbolTable;
+        this.typeTable = typeTable;
     }
 
 }

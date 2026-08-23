@@ -3,7 +3,9 @@ package com.paboomi.backend.semantic.symboltable;
 import com.paboomi.backend.semantic.symboltable.symbols.Symbol;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 
 /**
  * Hierarchical symbol table that manages a stack of scopes
@@ -98,6 +100,13 @@ public class SymbolTable {
     public void reset(){
         scopeStack.clear();
         pushScope("global");
+    }
+
+    /**
+     * Return all current scopes in the stack for the GUI .
+     */
+    public List<Scope> getAllScopes() {
+        return new ArrayList<>(scopeStack);
     }
 
     @Override

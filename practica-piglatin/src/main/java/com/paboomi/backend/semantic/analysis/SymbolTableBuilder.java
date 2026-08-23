@@ -19,6 +19,8 @@ import com.paboomi.backend.semantic.symboltable.SymbolTable;
 import com.paboomi.backend.semantic.symboltable.symbols.*;
 import com.paboomi.backend.semantic.types.StructType;
 import com.paboomi.backend.semantic.types.TypeTable;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Semantic analysis pass 1.
@@ -33,6 +35,8 @@ import com.paboomi.backend.semantic.types.TypeTable;
  *
  * !EYE!!: A local variable may shadow one from a parent scope.
  */
+@Getter
+@Setter
 public class SymbolTableBuilder implements Visitor<Void> {
 
     private final SymbolTable symbolTable;

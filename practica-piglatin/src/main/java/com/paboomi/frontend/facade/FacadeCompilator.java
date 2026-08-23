@@ -4,6 +4,8 @@ import com.paboomi.backend.dtos.CustomErrorDTO;
 import com.paboomi.backend.dtos.ParserResultDTO;
 import com.paboomi.backend.model.nodes.principal.NodeProgram;
 import com.paboomi.backend.semantic.analysis.SemanticAnalyzer;
+import com.paboomi.backend.semantic.symboltable.SymbolTable;
+import com.paboomi.backend.semantic.types.TypeTable;
 import com.paboomi.backend.services.ServiceAnalyzer;
 import com.paboomi.backend.services.TreeMapperService;
 import com.paboomi.frontend.facade.dto.AnalysisResultDTO;
@@ -37,10 +39,16 @@ public class FacadeCompilator {
 
         NodeProgram ast = treeMapperService.buildAST(parserResult);
 
+        SymbolTable symbolTable = new SymbolTable();
+        TypeTable typeTable = new TypeTable();
+
         if (ast != null && parserResult.getErrorsList().isEmpty()){
             SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
             List<CustomErrorDTO> semanticErrors = semanticAnalyzer.analyze(ast);
             allErrors.addAll(semanticErrors);
+
+            symbolTable = semanticAnalyzer.getSymbolTable();
+            typeTable = semanticAnalyzer.getTypeTable();
         }
 
         DefaultTreeModel swingModel = treeMapperService.swingFormatConversion(parserResult);
@@ -51,7 +59,9 @@ public class FacadeCompilator {
                 isValid,
                 swingModel,
                 allErrors,
-                parserResult.getStackStateDTO()
+                parserResult.getStackStateDTO(),
+                symbolTable,
+                typeTable
         );
 
     }
