@@ -596,10 +596,12 @@ public class ASTBuilder extends LatinParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitBooleanExpression(LatinParser.BooleanExpressionContext ctx) {
-        ASTNode expression = visit(ctx.booleanOrExpression());
+        /*ASTNode expression = visit(ctx.booleanOrExpression());
         return new NodeBooleanExpression(expression,
                 ctx.getStart().getLine(),
                 ctx.getStart().getCharPositionInLine());
+         */
+        return visit(ctx.booleanOrExpression());
     }
 
     @Override

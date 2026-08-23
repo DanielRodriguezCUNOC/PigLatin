@@ -43,7 +43,7 @@ public class NodeVariableDeclaration extends NodeDeclaration {
 
         sb.append("esto ").append(identifier);
         if(type != null) sb.append(" : ").append(type);
-        sb.append(" = ").append(initializer != null ? initializer.toString() : "null");
+        sb.append(" ").append(initializer != null ? initializer.toString() : "null");
         return sb.toString();
     }
 

@@ -161,6 +161,18 @@ public class TypeChecker implements Visitor<String> {
                     new ParameterSymbol(param.getParameterName(), param.getDataType(), param.getLine(), param.getColumn()));
         }
 
+        //* Register parameters in the local scope
+        for (NodeParameter param : n.getParameters()) {
+            ParameterSymbol parameterSymbol = new ParameterSymbol(
+                    param.getParameterName(), param.getDataType(), param.getLine(), param.getColumn()
+            );
+            symbolTable.declare(param.getParameterName(), parameterSymbol);
+        }
+
+        for (ASTNode localDecl: n.getLocalVariables()){
+            localDecl.accept(this);
+        }
+
         // Visit the body
         if (n.getBody() != null) {
             n.getBody().accept(this);

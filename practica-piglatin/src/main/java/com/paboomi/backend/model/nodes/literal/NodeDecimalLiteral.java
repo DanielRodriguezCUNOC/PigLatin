@@ -2,12 +2,15 @@ package com.paboomi.backend.model.nodes.literal;
 
 import com.paboomi.backend.model.nodes.principal.ASTNode;
 import com.paboomi.backend.model.visitor.Visitor;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Represents a decimal literal production:
  * DECIMAL
  */
-
+@Getter
+@Setter
 public class NodeDecimalLiteral extends ASTNode {
 
     //* The decimal values convert to double

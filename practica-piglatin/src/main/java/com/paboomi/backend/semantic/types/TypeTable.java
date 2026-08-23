@@ -12,8 +12,6 @@ import java.util.Set;
 /**
  * Global type's table
  */
-
-
 @Getter
 @Setter
 public class TypeTable {
@@ -22,6 +20,7 @@ public class TypeTable {
 
     public TypeTable() {
         this.types = new HashMap<>();
+        preloadPrimitives();
     }
 
     /**
