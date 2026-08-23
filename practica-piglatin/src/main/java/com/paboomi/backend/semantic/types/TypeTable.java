@@ -32,7 +32,24 @@ public class TypeTable {
         types.put("DECIMALIS", null);
         types.put("TEXTUM", null);
         types.put("LITTERA", null);
-        types.put("BOOLEAN", null);
+        types.put("BOOL", null);
+    }
+
+    public String resolveType(String typeName){
+        if(typeName == null) return null;
+        if(typeName.equals("bool")) return "BOOL";
+        return typeName;
+    }
+
+    public boolean exists(String name){
+
+        if (name == null) return false;
+        String resolved = resolveType(name);
+        if (resolved.startsWith("SERIES_")){
+            String base = resolved.substring(7);
+            return exists(base);
+        }
+        return types.containsKey(resolved);
     }
 
     public boolean registerStruct(String name, StructType struct){
@@ -41,28 +58,35 @@ public class TypeTable {
         return true;
     }
 
-    public boolean exists(String name){
-        return types.containsKey(name);
-    }
-
-
     public boolean isPrimitive(String typeName) {
-        return exists(typeName) && types.get(typeName) == null;
+        if (typeName == null) return false;
+        String resolved = resolveType(typeName);
+        if (resolved.startsWith("SERIES_")) return false;
+        return exists(resolved) && types.get(resolved) == null;
     }
 
     /**
      * Verified if is a struct defined for by user.
      */
     public boolean isStruct(String typeName) {
-        return exists(typeName) && types.get(typeName) != null;
+        if (typeName == null) return false;
+        String resolved = resolveType(typeName);
+        if (resolved.startsWith("SERIES_")) return false;
+        return exists(resolved) && types.get(resolved) != null;
     }
 
     public StructType getStruct(String name) {
-        return types.get(name);
+        if (name == null) return null;
+        String resolved = resolveType(name);
+        if (resolved.startsWith("SERIES_")) return null;
+        return types.get(resolved);
     }
 
     public String getFieldType(String structName, String fieldName) {
-        StructType struct = types.get(structName);
+        if (structName == null || fieldName == null) return null;
+        String resolved = resolveType(structName);
+        if (resolved.startsWith("SERIES_")) return null;
+        StructType struct = types.get(resolved);
         if (struct == null) return null;
         return struct.getFieldType(fieldName);
     }
@@ -81,6 +105,11 @@ public class TypeTable {
         return Collections.unmodifiableMap(structs);
     }
 
+    public String getArrayElementType(String arrayType) {
+        if (arrayType == null || !arrayType.startsWith("SERIES_")) return null;
+        return resolveType(arrayType.substring(7));
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -89,7 +118,7 @@ public class TypeTable {
         for (String typeName : types.keySet()) {
             StructType struct = types.get(typeName);
             if (struct == null) sb.append(" [primitive] ").append(typeName).append("\n");
-            else sb.append(" [struct] ").append(struct.toString()).append("\n");
+            else sb.append(" [struct] ").append(struct).append("\n");
         }
         return sb.toString();
     }

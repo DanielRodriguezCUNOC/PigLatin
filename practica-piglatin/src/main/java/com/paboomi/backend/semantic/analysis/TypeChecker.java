@@ -79,49 +79,92 @@ public class TypeChecker implements Visitor<String> {
 
     @Override
     public String visitVariableDeclaration(NodeVariableDeclaration n) {
-        String exprType = n.getInitializer() != null ? n.getInitializer().accept(this) : null;
 
-        if (n.getType() == null && exprType != null) {
+        //* Normalize Type Created
+        String declaredType = n.getType() != null ? normalizeType(n.getType()) : null;
+        //* Save normalized node
+        n.setType(declaredType);
 
-            // Type inference: assign the inferred type to the node
-            n.setType(exprType);
-        } else if (n.getType() != null && exprType != null) {
-            if (!areTypesCompatible(n.getType(), exprType)) {
-                errorReporter.reportError(
-                        "Incompatible type in declaration: expected '" + n.getType() +
-                                "' but it has been found '" + exprType + "'",
-                        n.getLine(), n.getColumn());
+        //* Get and normalize type in initialization
+        String exprType = null;
+        if (n.getInitializer() != null) {
+            exprType = n.getInitializer().accept(this);
+            if (exprType != null) {
+                exprType = normalizeType(exprType);
             }
         }
 
-        // Record in a dedicated table for subsequent lookup.
+        //* Type inference if no type is declared
+        if (declaredType == null && exprType != null) {
+            n.setType(exprType);
+            declaredType = exprType;
+        }
+        // Compatibility validation if both exist
+        else if (declaredType != null && exprType != null) {
+            if (!areTypesCompatible(declaredType, exprType)) {
+                errorReporter.reportError(
+                        "Incompatible type in declaration: expected '" + declaredType +
+                                "' but it has been found '" + exprType + "'",
+                        n.getLine(), n.getColumn()
+                );
+            }
+        }
+
+        //* Register in the symbol table with the type already normalized
         VariableSymbol symbol = new VariableSymbol(
-                n.getIdentifier(), n.getType(), n.getLine(), n.getColumn()
+                n.getIdentifier(),
+                n.getType(),
+                n.getLine(),
+                n.getColumn()
         );
-        symbolTable.declare(n.getIdentifier(), symbol);
+        if (!symbolTable.declare(n.getIdentifier(), symbol)) {
+            errorReporter.reportError(
+                    "Variable redeclaration '" + n.getIdentifier() + "' in the same scope",
+                    n.getLine(), n.getColumn()
+            );
+        }
 
         return null;
     }
 
     @Override
     public String visitArrayDeclaration(NodeArrayDeclaration n) {
+
+        //* Normalize element type
+        String elementType = n.getElementType() != null ? normalizeType(n.getElementType()) : null;
+        n.setElementType(elementType);
+
+        //* Validate initializers
         for (ASTNode value : n.getInitialValues()) {
             String valType = value.accept(this);
-            if (n.getElementType() != null && valType != null && !areTypesCompatible(n.getElementType(), valType)) {
-                errorReporter.reportError(
-                        "Incompatible type in array initializer: expected '" +
-                                n.getElementType() + "' but it has been found '" + valType + "'",
-                        value.getLine(), value.getColumn());
+            if (valType != null) {
+                valType = normalizeType(valType);
+                if (elementType != null && !areTypesCompatible(elementType, valType)) {
+                    errorReporter.reportError(
+                            "Incompatible type in array initializer: expected '" +
+                                    elementType + "' but it has been found '" + valType + "'",
+                            value.getLine(), value.getColumn()
+                    );
+                }
             }
         }
 
+        //* Register as ArraySymbol (SERIES_elementType type)
+        String arrayType = elementType != null ? "SERIES_" + elementType : null;
         ArraySymbol symbol = new ArraySymbol(
                 n.getIdentifier(),
-                n.getElementType() != null ? "SERIES_" + n.getElementType() : null,
-                n.getSize(), n.getElementType(),
-                n.getLine(), n.getColumn()
+                arrayType,
+                n.getSize(),
+                elementType,
+                n.getLine(),
+                n.getColumn()
         );
-        symbolTable.declare(n.getIdentifier(), symbol);
+        if (!symbolTable.declare(n.getIdentifier(), symbol)) {
+            errorReporter.reportError(
+                    "Redeclaration of array '" + n.getIdentifier() + "' in the same scope",
+                    n.getLine(), n.getColumn()
+            );
+        }
 
         return null;
     }
@@ -198,11 +241,19 @@ public class TypeChecker implements Visitor<String> {
         String lvalueType = n.getLvalue().accept(this);
         String exprType = n.getExpression() != null ? n.getExpression().accept(this) : null;
 
+        if (lvalueType != null) {
+            lvalueType = normalizeType(lvalueType);
+        }
+        if (exprType != null) {
+            exprType = normalizeType(exprType);
+        }
+
         if (lvalueType != null && exprType != null && !areTypesCompatible(lvalueType, exprType)) {
             errorReporter.reportError(
                     "Incompatible assignment type: cannot assign '" + exprType +
                             "' to '" + lvalueType + "'",
-                    n.getLine(), n.getColumn());
+                    n.getLine(), n.getColumn()
+            );
         }
         return null;
     }
@@ -307,24 +358,34 @@ public class TypeChecker implements Visitor<String> {
     @Override
     public String visitReturn(NodeReturn n) {
         String expectedReturn = functionReturnStack.isEmpty() ? null : functionReturnStack.peek();
+        if (expectedReturn != null) {
+            expectedReturn = normalizeType(expectedReturn);
+        }
+
         String exprType = n.getExpression() != null ? n.getExpression().accept(this) : null;
+        if (exprType != null) {
+            exprType = normalizeType(exprType);
+        }
 
         if ("VOID".equals(expectedReturn)) {
             if (exprType != null) {
                 errorReporter.reportError(
                         "The 'actio' function must not return a value.",
-                        n.getLine(), n.getColumn());
+                        n.getLine(), n.getColumn()
+                );
             }
         } else {
             if (exprType == null) {
                 errorReporter.reportError(
-                        "The 'ratio' function must return a value of type'" + expectedReturn + "'",
-                        n.getLine(), n.getColumn());
+                        "The 'ratio' function must return a value of type '" + expectedReturn + "'",
+                        n.getLine(), n.getColumn()
+                );
             } else if (expectedReturn != null && !areTypesCompatible(expectedReturn, exprType)) {
                 errorReporter.reportError(
-                        "Incompatible return type: expected'" + expectedReturn +
+                        "Incompatible return type: expected '" + expectedReturn +
                                 "' but was founded '" + exprType + "'",
-                        n.getLine(), n.getColumn());
+                        n.getLine(), n.getColumn()
+                );
             }
         }
         return null;
@@ -352,6 +413,9 @@ public class TypeChecker implements Visitor<String> {
         }
 
         String currentType = baseSymbol.getType();
+        if (currentType != null) {
+            currentType = normalizeType(currentType);
+        }
 
         for (ASTNode suffix : n.getSuffixes()) {
             if (suffix instanceof NodeFieldAccess fieldAccess) {
@@ -359,32 +423,41 @@ public class TypeChecker implements Visitor<String> {
                     errorReporter.reportError(
                             "The field cannot be accessed. '" + fieldAccess.getFieldName() +
                                     "' of a non-struct type '" + currentType + "'",
-                            fieldAccess.getLine(), fieldAccess.getColumn());
+                            fieldAccess.getLine(), fieldAccess.getColumn()
+                    );
                     return "ERROR";
                 }
                 String fieldType = typeTable.getFieldType(currentType, fieldAccess.getFieldName());
                 if (fieldType == null) {
                     errorReporter.reportError(
                             "The struct '" + currentType + "' It has no field. '" + fieldAccess.getFieldName() + "'",
-                            fieldAccess.getLine(), fieldAccess.getColumn());
+                            fieldAccess.getLine(), fieldAccess.getColumn()
+                    );
                     return "ERROR";
                 }
-                currentType = fieldType;
+                currentType = normalizeType(fieldType);
             } else if (suffix instanceof NodeIndexAccess indexAccess) {
                 String indexType = indexAccess.getIndexExpression().accept(this);
                 if (indexType != null && !"NUMERUS".equals(indexType)) {
                     errorReporter.reportError(
                             "Array index must be NUMERUS, found '" + indexType + "'",
-                            indexAccess.getLine(), indexAccess.getColumn());
+                            indexAccess.getLine(), indexAccess.getColumn()
+                    );
                 }
                 if (baseSymbol instanceof ArraySymbol arrSym) {
-                    currentType = arrSym.getElementType();
+                    String elemType = arrSym.getElementType();
+                    if (elemType != null) {
+                        currentType = normalizeType(elemType);
+                    } else {
+                        currentType = "ERROR";
+                    }
                 } else if (currentType != null && currentType.startsWith("SERIES_")) {
-                    currentType = currentType.substring(7);
+                    currentType = normalizeType(currentType.substring(7));
                 } else {
                     errorReporter.reportError(
                             "A non-array type cannot be indexed. '" + currentType + "'",
-                            indexAccess.getLine(), indexAccess.getColumn());
+                            indexAccess.getLine(), indexAccess.getColumn()
+                    );
                     return "ERROR";
                 }
             }
@@ -646,7 +719,7 @@ public class TypeChecker implements Visitor<String> {
 
     @Override
     public String visitStructLiteral(NodeStructLiteral n) {
-        if (n.getTipoNodo() != null && !typeTable.exists(n.getTipoNodo())) {
+        if (n.getStructName() != null && !typeTable.exists(n.getStructName())) {
             errorReporter.reportError(
                     "Unknown struct type: '" + n.getStructName() + "'",
                     n.getLine(), n.getColumn());
@@ -744,34 +817,52 @@ public class TypeChecker implements Visitor<String> {
         return "NUMERUS";
     }
 
-    /**
-     * Checks if two types are compatible for assignment/comparison.
-     * Rules:
-     *  - Same type → compatible.
-     *  - NUMERUS and DECIMALIS -> compatible -> implicit promotion.
-     *  - VERUM/FALSUS and BOOLEAN -> compatible -> internal alias.
-     */
-    private boolean areTypesCompatible(String expected, String actual) {
-        if (expected == null || actual == null) return true; // One is unknown; do not report yet.
-        if (expected.equals(actual)) return true;
 
-        // Numerical promotion
-        if (("NUMERUS".equals(expected) && "DECIMALIS".equals(actual)) ||
-                ("DECIMALIS".equals(expected) && "NUMERUS".equals(actual))) {
-            return true;
-        }
 
-        // Booleans
-        if (isBooleanType(expected) && isBooleanType(actual)) return true;
-
-        return false;
+    private String normalizeType(String type) {
+        if ("bool".equals(type) || "BOOL".equals(type)) return "BOOLEAN";
+        return type;
     }
 
     private boolean isBooleanType(String type) {
-        return "BOOLEAN".equals(type) || "VERUM".equals(type) || "FALSUS".equals(type);
+        return "BOOLEAN".equals(type) || "BOOL".equals(type) ||
+                "bool".equals(type) || "VERUM".equals(type) || "FALSUS".equals(type);
     }
 
     private boolean isNumericType(String type) {
         return "NUMERUS".equals(type) || "DECIMALIS".equals(type);
     }
+
+    /**
+     * Checks if two types are compatible for assignment/comparison.
+     * Rules:
+     *  - Same type -> compatible.
+     *  - NUMERUS and DECIMALIS -> compatible -> implicit promotion.
+     */
+    private boolean areTypesCompatible(String expected, String actual) {
+        if (expected == null || actual == null) return true;
+        if (expected.equals(actual)) return true;
+
+        //* Numerical promotion
+        if (("NUMERUS".equals(expected) && "DECIMALIS".equals(actual)) ||
+                ("DECIMALIS".equals(expected) && "NUMERUS".equals(actual))) {
+            return true;
+        }
+
+        //* Booleans: all boolean types are compatible.
+        if (isBooleanType(expected) && isBooleanType(actual)) {
+            return true;
+        }
+
+        //* Arrays: compatible if the elements are compatible.
+        if (expected.startsWith("SERIES_") && actual.startsWith("SERIES_")) {
+            String expectedElem = expected.substring(7);
+            String actualElem = actual.substring(7);
+            return areTypesCompatible(expectedElem, actualElem);
+        }
+
+        return false;
+    }
+
+
 }
