@@ -1057,25 +1057,44 @@ public class ASTBuilder extends LatinParserBaseVisitor<ASTNode> {
     }
 
     private ASTNode buildAccessChain(NodeIdentifier base,
-            List<LatinParser.AtributeAccessExpresionContext> suffixes) {
-        ASTNode current = base;
+                                     List<LatinParser.AtributeAccessExpresionContext> suffixes) {
+
+        // Si no hay sufijos, devolvemos el identificador base tal cual
+        if (suffixes == null || suffixes.isEmpty()) {
+            return base;
+        }
+
+        // Creamos un NodeLvalue que es capaz de almacenar una lista plana de sufijos (campos e índices)
+        NodeLvalue currentLvalue = new NodeLvalue(
+                base.getId(),
+                new ArrayList<>(),
+                base.getLine(),
+                base.getColumn());
+
+        ASTNode currentExpression = currentLvalue;
 
         for (LatinParser.AtributeAccessExpresionContext suffix : suffixes) {
             if (suffix instanceof LatinParser.AtributeAccessExpressionDitIDContext) {
                 String fieldName = ((LatinParser.AtributeAccessExpressionDitIDContext) suffix).ID().getText();
-                current = new NodeAttributeAccess(
-                        current,
-                        fieldName,
-                        suffix.getStart().getLine(),
-                        suffix.getStart().getCharPositionInLine());
+
+                if (currentExpression instanceof NodeLvalue) {
+                    // Si seguimos en una cadena de Lvalue, agregamos el sufijo nativo NodeFieldAccess
+                    currentLvalue.addSuffix(new NodeFieldAccess(fieldName, suffix.getStart().getLine(), suffix.getStart().getCharPositionInLine()));
+                } else {
+                    // Si ya hubo una llamada a función antes, lo tratamos como NodeAttributeAccess clásico
+                    currentExpression = new NodeAttributeAccess(currentExpression, fieldName, suffix.getStart().getLine(), suffix.getStart().getCharPositionInLine());
+                }
+
             } else if (suffix instanceof LatinParser.AtributeAccessExpressionClaspExpressionContext) {
-                ASTNode index = visit(
-                        ((LatinParser.AtributeAccessExpressionClaspExpressionContext) suffix).expression());
-                current = new NodeAttributeAccess(
-                        current,
-                        index,
-                        suffix.getStart().getLine(),
-                        suffix.getStart().getCharPositionInLine());
+                ASTNode index = visit(((LatinParser.AtributeAccessExpressionClaspExpressionContext) suffix).expression());
+
+                if (currentExpression instanceof NodeLvalue) {
+                    // Si seguimos en una cadena de Lvalue, agregamos el sufijo nativo NodeIndexAccess
+                    currentLvalue.addSuffix(new NodeIndexAccess(index, suffix.getStart().getLine(), suffix.getStart().getCharPositionInLine()));
+                } else {
+                    currentExpression = new NodeAttributeAccess(currentExpression, index, suffix.getStart().getLine(), suffix.getStart().getCharPositionInLine());
+                }
+
             } else if (suffix instanceof LatinParser.AtributeAccessExpressionParenExpressionContext) {
                 LatinParser.AtributeAccessExpressionParenExpressionContext parenCtx = (LatinParser.AtributeAccessExpressionParenExpressionContext) suffix;
                 List<ASTNode> args = new ArrayList<>();
@@ -1087,8 +1106,8 @@ public class ASTBuilder extends LatinParserBaseVisitor<ASTNode> {
                         }
                     }
                 }
-                String functionName = extractFunctionName(current);
-                current = new NodeFunctionCall(
+                String functionName = extractFunctionName(currentExpression);
+                currentExpression = new NodeFunctionCall(
                         functionName,
                         args,
                         suffix.getStart().getLine(),
@@ -1096,7 +1115,7 @@ public class ASTBuilder extends LatinParserBaseVisitor<ASTNode> {
             }
         }
 
-        return current;
+        return currentExpression;
     }
 
     private String extractFunctionName(ASTNode node) {
@@ -1105,6 +1124,18 @@ public class ASTBuilder extends LatinParserBaseVisitor<ASTNode> {
         }
         if (node instanceof NodeAttributeAccess) {
             return ((NodeAttributeAccess) node).getFieldName();
+        }
+        // NUEVO: Extraer el nombre de la función si viene de un NodeLvalue
+        if (node instanceof NodeLvalue) {
+            NodeLvalue lval = (NodeLvalue) node;
+            if (!lval.hasSuffixes()) {
+                return lval.getIdentifier();
+            } else {
+                ASTNode lastSuffix = lval.getSuffixes().get(lval.getSuffixes().size() - 1);
+                if (lastSuffix instanceof NodeFieldAccess) {
+                    return ((NodeFieldAccess) lastSuffix).getFieldName();
+                }
+            }
         }
         return null;
     }

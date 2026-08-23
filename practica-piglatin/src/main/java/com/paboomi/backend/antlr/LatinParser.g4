@@ -42,6 +42,13 @@ instruction
     ;
 
 // Variable Declaration
+
+/*
+If declaration don support initialization inside arrays use this:
+declaration
+    : ESTO ID COLON type (ASSIGN expression)? SEMICOLON?
+    ;
+*/
 declaration
     : ESTO ID (COLON)? (type)? expression SEMICOLON?
     ;
@@ -169,6 +176,7 @@ type
     | LITTERA                                                               #TypeLittera
     | VERUM                                                                 #TypeVerum
     | FALSUS                                                                #TypeFalsus
+    | BOOL                                                                  #TypeBool
     | ID                                                                    #TypeID
     ;
 

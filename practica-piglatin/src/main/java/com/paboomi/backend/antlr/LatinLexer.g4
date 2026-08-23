@@ -57,6 +57,7 @@ ESTO: 'esto';
 NUMERUS: 'numerus';
 TEXTUM: 'textum';
 DECIMALIS: 'decimalis';
+BOOL: 'bool';
 LITTERA: 'littera';
 VERUM: 'verum';
 FALSUS: 'falsus';
