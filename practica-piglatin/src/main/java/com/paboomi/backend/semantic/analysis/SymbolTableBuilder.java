@@ -177,6 +177,7 @@ public class SymbolTableBuilder implements Visitor<Void> {
         FunctionSymbol funcSymbol = new FunctionSymbol(
                 n.getFunctionName(), n.getReturnType(),
                 n.getLine(), n.getColumn(), n.getReturnType());
+
         for (NodeParameter param : n.getParameters()) {
             funcSymbol.addParameter(new ParameterSymbol(
                     param.getDataType(), param.getDataType(), param.getLine(), param.getColumn()
@@ -197,6 +198,18 @@ public class SymbolTableBuilder implements Visitor<Void> {
                     param.getParameterName(), param.getDataType(), param.getLine(), param.getColumn()
             );
             symbolTable.declare(param.getParameterName(), paramSymbol);
+        }
+
+        //* Register parameters in the local scope
+        for (NodeParameter param : n.getParameters()) {
+            ParameterSymbol parameterSymbol = new ParameterSymbol(
+                    param.getParameterName(), param.getDataType(), param.getLine(), param.getColumn()
+            );
+            symbolTable.declare(param.getParameterName(), parameterSymbol);
+        }
+
+        for (ASTNode localDecl: n.getLocalVariables()){
+            localDecl.accept(this);
         }
 
         // Visit the body

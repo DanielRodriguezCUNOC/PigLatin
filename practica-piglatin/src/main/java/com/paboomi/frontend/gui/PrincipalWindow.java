@@ -19,6 +19,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -41,6 +42,8 @@ public class PrincipalWindow extends javax.swing.JFrame {
     private JTable tblSymbols;
     private JTable tblTypes;
     private File currentOpenFile = null;
+    private JButton btnTranslatePigLatin;
+    private JTextArea txtTranslatedCode;
 
     /**
      * Creates new form PrincipalWindow
@@ -54,6 +57,8 @@ public class PrincipalWindow extends javax.swing.JFrame {
 
         initComponents();
         setupCustomComponents();
+        setupTranslatedCodePanel();
+        setupTranslateButton();
         setupFileMenu();
 
         // Listener for stack navigation
@@ -344,8 +349,51 @@ public class PrincipalWindow extends javax.swing.JFrame {
         jTextArea1.setFont(codeFont);
         jTextArea1.setEditable(false);
         jTextArea1.setText("Press Compile to generate stack trace...");
-
     }
+
+    //* Configure Translated Code Panel
+    private void setupTranslatedCodePanel(){
+        pnlTranslatedCode.setLayout(new BorderLayout());
+
+        JTextArea txtTranslatedCode = new JTextArea();
+        txtTranslatedCode.setFont(codeFont);
+        txtTranslatedCode.setBackground(new Color(30, 30, 46));
+        txtTranslatedCode.setForeground(new Color(166, 227, 161));
+        txtTranslatedCode.setEditable(false);
+        txtTranslatedCode.setText("Compile first, then click 'Translate to PigLatin' :)");
+
+        JScrollPane scrollPane = new JScrollPane(txtTranslatedCode);
+        scrollPane.setBorder(null);
+        pnlTranslatedCode.add(scrollPane, BorderLayout.CENTER);
+
+        this.txtTranslatedCode = txtTranslatedCode;
+    }
+
+    private void setupTranslateButton(){
+        btnTranslatePigLatin = new JButton("Translate to PigLatin");
+        btnTranslatePigLatin.setBackground(new Color(166, 227, 161));
+        btnTranslatePigLatin.setForeground(Color.BLACK);
+        btnTranslatePigLatin.setFont(codeFont.deriveFont(Font.BOLD));
+        btnTranslatePigLatin.addActionListener(e -> onTranslatePigLatin());
+        jPanel1.add(btnTranslatePigLatin);
+        jPanel1.revalidate();
+    }
+
+    private void btnTranslatePigLatinActionPerformed(ActionEvent evt){
+        onTranslatePigLatin();
+    }
+
+    private void onTranslatePigLatin(){
+        if (txtTranslatedCode == null) setupTranslatedCodePanel();
+
+        String pigLatinCode = facade.generatePigLatinCode();
+        txtTranslatedCode.setText(pigLatinCode);
+        jTabbedPane1.setSelectedComponent(pnlTranslatedCode);
+
+        lblStateBar.setText("Status: PigLatin translation generated, OINK OINK :p ");
+    }
+
+
 
     private void onCompileExecuted() {
         String code = txtACodeEditor.getText();
@@ -728,7 +776,7 @@ public class PrincipalWindow extends javax.swing.JFrame {
     }
 
     private void exportPigFile() {
-        String translatedCode = "Content traslated";
+        String translatedCode = txtTranslatedCode.toString();
 
         if (translatedCode.trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "There is no translated code to export.", "Warning", JOptionPane.WARNING_MESSAGE);
