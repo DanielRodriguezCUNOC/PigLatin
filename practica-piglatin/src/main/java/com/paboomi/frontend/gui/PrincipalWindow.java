@@ -19,6 +19,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -39,6 +40,7 @@ public class PrincipalWindow extends javax.swing.JFrame {
     private static final Set<String> NON_TERMINALS = new HashSet<>(Arrays.asList(LatinParser.ruleNames));
     private JTable tblSymbols;
     private JTable tblTypes;
+    private File currentOpenFile = null;
 
     /**
      * Creates new form PrincipalWindow
@@ -52,6 +54,7 @@ public class PrincipalWindow extends javax.swing.JFrame {
 
         initComponents();
         setupCustomComponents();
+        setupFileMenu();
 
         // Listener for stack navigation
         jButton1.addActionListener(e -> showPreviousStackStep());
@@ -255,7 +258,7 @@ public class PrincipalWindow extends javax.swing.JFrame {
         setJMenuBar(jMenuBar2);
 
         pack();
-    }// </editor-fold>//GEN-END:initComponents
+    }
 
     private void txtFCommandConsoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtFCommandConsoleActionPerformed
         // TODO add your handling code here:
@@ -657,6 +660,101 @@ public class PrincipalWindow extends javax.swing.JFrame {
 
     private boolean isNonTerminal(String symbol) {
         return NON_TERMINALS.contains(symbol);
+    }
+
+    private void setupFileMenu() {
+        jMenu3.removeAll();
+
+        JMenuItem mniOpen = new JMenuItem("Open .lat File...");
+        JMenuItem mniSave = new JMenuItem("Save .lat File");
+        JMenuItem mniExportPig = new JMenuItem("Export to PigLatin (.pig)...");
+
+
+        mniOpen.addActionListener(e -> openLatFile());
+        mniSave.addActionListener(e -> saveLatFile());
+        mniExportPig.addActionListener(e -> exportPigFile());
+
+        jMenu3.add(mniOpen);
+        jMenu3.add(mniSave);
+        jMenu3.addSeparator();
+        jMenu3.add(mniExportPig);
+    }
+
+    private void openLatFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Open Latin source file");
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Latin Files (*.lat)", "lat"));
+
+        int userSelection = fileChooser.showOpenDialog(this);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            currentOpenFile = fileChooser.getSelectedFile();
+            try {
+                // Read all the content and place it in the editor.
+                String content = new String(java.nio.file.Files.readAllBytes(currentOpenFile.toPath()));
+                txtACodeEditor.setText(content);
+                lblStateBar.setText(" Status: Opened " + currentOpenFile.getName() + " | Mode: Editing ");
+            } catch (java.io.IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error reading file: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void saveLatFile() {
+
+        if (currentOpenFile == null) {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Save Latin source file");
+            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Latin Files (*.lat)", "lat"));
+
+            int userSelection = fileChooser.showSaveDialog(this);
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                currentOpenFile = fileChooser.getSelectedFile();
+
+                if (!currentOpenFile.getName().toLowerCase().endsWith(".lat")) {
+                    currentOpenFile = new java.io.File(currentOpenFile.getAbsolutePath() + ".lat");
+                }
+            } else {
+                return; // The user cancelled.
+            }
+        }
+
+        // Save the editor's text to the original file.
+        try {
+            java.nio.file.Files.writeString(currentOpenFile.toPath(), txtACodeEditor.getText());
+            lblStateBar.setText(" Status: Saved " + currentOpenFile.getName() + " | Mode: Editing ");
+        } catch (java.io.IOException ex) {
+            JOptionPane.showMessageDialog(this, "Error saving file: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void exportPigFile() {
+        String translatedCode = "Content traslated";
+
+        if (translatedCode.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "There is no translated code to export.", "Warning", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Export PigLatin code");
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PigLatin Files (*.pig)", "pig"));
+
+        int userSelection = fileChooser.showSaveDialog(this);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            java.io.File pigFile = fileChooser.getSelectedFile();
+
+            // Asegurarse de que tenga la extensión .pig
+            if (!pigFile.getName().toLowerCase().endsWith(".pig")) {
+                pigFile = new java.io.File(pigFile.getAbsolutePath() + ".pig");
+            }
+
+            try {
+                java.nio.file.Files.writeString(pigFile.toPath(), translatedCode);
+                JOptionPane.showMessageDialog(this, "PigLatin file exported successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } catch (java.io.IOException ex) {
+                JOptionPane.showMessageDialog(this, "Error exporting file: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
 
