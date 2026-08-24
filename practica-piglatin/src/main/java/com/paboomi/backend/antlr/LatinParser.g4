@@ -174,8 +174,6 @@ type
     | TEXTUM                                                                #TypeTextum
     | DECIMALIS                                                             #TypeDecimalis
     | LITTERA                                                               #TypeLittera
-    | VERUM                                                                 #TypeVerum
-    | FALSUS                                                                #TypeFalsus
     | BOOL                                                                  #TypeBool
     | ID                                                                    #TypeID
     ;
@@ -324,7 +322,6 @@ numericLiteral
     : INTEGER                                                                   #NumericLiteralInteger
     | DECIMAL                                                                   #NumericLiteralDecimal
     | CHAR                                                                      #NumericLiteralChar
-    | booleanLiteral                                                            #NumericLiteralBoolean
     ;
 
 booleanLiteral

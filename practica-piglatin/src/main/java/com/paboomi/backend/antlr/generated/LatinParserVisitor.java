@@ -315,20 +315,6 @@ public interface LatinParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTypeLittera(LatinParser.TypeLitteraContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code TypeVerum}
-	 * labeled alternative in {@link LatinParser#type}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypeVerum(LatinParser.TypeVerumContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code TypeFalsus}
-	 * labeled alternative in {@link LatinParser#type}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypeFalsus(LatinParser.TypeFalsusContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code TypeBool}
 	 * labeled alternative in {@link LatinParser#type}.
 	 * @param ctx the parse tree
@@ -679,13 +665,6 @@ public interface LatinParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitNumericLiteralChar(LatinParser.NumericLiteralCharContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code NumericLiteralBoolean}
-	 * labeled alternative in {@link LatinParser#numericLiteral}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitNumericLiteralBoolean(LatinParser.NumericLiteralBooleanContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code BooleanLiteralVerum}
 	 * labeled alternative in {@link LatinParser#booleanLiteral}.

@@ -42,10 +42,10 @@ public class FunctionSymbol extends Symbol{
             sb.append(parameters.get(i).getType());
 
             if (i < parameters.size() - 1) sb.append(", ");
-            sb.append(")");
-
-            if (returnType != null) sb.append(" -> ").append(returnType);
         }
+        sb.append(")");
+
+        if (returnType != null) sb.append(" -> ").append(returnType);
         return sb.toString();
     }
 

@@ -33,11 +33,13 @@ public class TypeTable {
         types.put("TEXTUM", null);
         types.put("LITTERA", null);
         types.put("BOOL", null);
+        types.put("BOOLEAN", null);
     }
 
     public String resolveType(String typeName){
         if(typeName == null) return null;
         if(typeName.equals("bool")) return "BOOL";
+        if(typeName.equals("BOOLEAN")) return "BOOL";
         return typeName;
     }
 
