@@ -124,12 +124,12 @@ public class ASTBuilder extends LatinParserBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitArrayDeclaration(LatinParser.ArrayDeclarationContext ctx) {
         String id = ctx.ID().getText();
-        int size = Integer.parseInt(ctx.INTEGER().getText());
+        ASTNode sizeExpr = visit(ctx.expression());
         String elementType = ctx.type() != null ? extractType(ctx.type()) : null;
 
         NodeArrayDeclaration arrDecl = new NodeArrayDeclaration(
                 id,
-                size,
+                sizeExpr,
                 elementType,
                 new ArrayList<>(),
                 ctx.getStart().getLine(),
@@ -590,6 +590,27 @@ public class ASTBuilder extends LatinParserBaseVisitor<ASTNode> {
         return visit(ctx.arrayLiteral());
     }
 
+    @Override
+    public ASTNode visitNumericLiteralChar(LatinParser.NumericLiteralCharContext ctx) {
+        String text = ctx.CHAR().getText();
+        char value = text.length() >= 3 ? text.charAt(1) : '\0';
+        return new NodeIntegerLiteral(
+                (int) value,
+                ctx.getStart().getLine(),
+                ctx.getStart().getCharPositionInLine()
+        );
+    }
+
+    @Override
+    public ASTNode visitNumericLiteralBoolean(LatinParser.NumericLiteralBooleanContext ctx) {
+        boolean value = ctx.booleanLiteral() instanceof LatinParser.BooleanLiteralVerumContext;
+        return new NodeIntegerLiteral(
+                value ? 1 : 0,
+                ctx.getStart().getLine(),
+                ctx.getStart().getCharPositionInLine()
+        );
+    }
+
     // ============================================================
     // BOOLEAN EXPRESSIONS
     // ============================================================
@@ -1001,6 +1022,8 @@ public class ASTBuilder extends LatinParserBaseVisitor<ASTNode> {
             return "FALSUS";
         if (ctx instanceof LatinParser.TypeIDContext)
             return ctx.getText();
+        if (ctx instanceof LatinParser.TypeBoolContext)
+            return "BOOL";
         return null;
     }
 

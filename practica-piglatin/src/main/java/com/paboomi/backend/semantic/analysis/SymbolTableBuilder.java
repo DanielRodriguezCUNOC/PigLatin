@@ -15,6 +15,7 @@ import com.paboomi.backend.model.nodes.lvalue.NodeLvalue;
 import com.paboomi.backend.model.nodes.principal.NodeProgram;
 import com.paboomi.backend.model.visitor.Visitor;
 import com.paboomi.backend.semantic.errors.SemanticErrorReporter;
+import com.paboomi.backend.semantic.expression.ConstantFolder;
 import com.paboomi.backend.semantic.symboltable.SymbolTable;
 import com.paboomi.backend.semantic.symboltable.symbols.*;
 import com.paboomi.backend.semantic.types.StructType;
@@ -86,15 +87,39 @@ public class SymbolTableBuilder implements Visitor<Void> {
                     n.getLine(), n.getColumn());
         }
 
-        // Visit the initializer first (to validate used identifiers)
+        // Visit the initializer first
         if (n.getInitializer() != null) {
             n.getInitializer().accept(this);
+
         }
 
         // Register in the current scope
         VariableSymbol symbol = new VariableSymbol(
                 n.getIdentifier(), n.getType(), n.getLine(), n.getColumn()
         );
+
+        //* Check if the initializer is a literal and store constant value
+        if (n.getInitializer() != null) {
+            ASTNode init = n.getInitializer();
+            Object constVal = null;
+            if (init instanceof NodeIntegerLiteral) {
+                constVal = ((NodeIntegerLiteral) init).getValue();
+            } else if (init instanceof NodeDecimalLiteral) {
+                constVal = ((NodeDecimalLiteral) init).getValue();
+            } else if (init instanceof NodeBooleanLiteral) {
+                constVal = ((NodeBooleanLiteral) init).isValue();
+            } else if (init instanceof NodeCharLiteral) {
+                constVal = (int) ((NodeCharLiteral) init).getValue();
+            } else if (init instanceof NodeStringLiteral) {
+                constVal = ((NodeStringLiteral) init).getValue();
+            }
+            if (constVal != null) {
+                symbol.setConstantValue(constVal);
+            }
+        }
+
+
+        //* Register in current scope
         if (!symbolTable.declare(n.getIdentifier(), symbol)) {
             errorReporter.reportError(
                     "Variable redeclaration '" + n.getIdentifier() + "' in the same scope",
@@ -113,15 +138,20 @@ public class SymbolTableBuilder implements Visitor<Void> {
                     n.getLine(), n.getColumn());
         }
 
+        //* Visit expression of size (T-T)
+        if (n.getSizeExpression() != null) n.getSizeExpression().accept(this);
+
         // Visit initial values
         for (ASTNode value : n.getInitialValues()) {
             value.accept(this);
         }
 
+
+        //* Regiter in symbol table
         ArraySymbol symbol = new ArraySymbol(
                 n.getIdentifier(),
                 n.getElementType() != null ? "SERIES_" + n.getElementType() : null,
-                n.getSize(),
+                0,
                 n.getElementType(),
                 n.getLine(), n.getColumn()
         );

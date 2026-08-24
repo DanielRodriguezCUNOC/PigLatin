@@ -54,7 +54,7 @@ declaration
     ;
 
 arrayDeclaration
-    : SERIES ID LEFT_CLASP INTEGER RIGHT_CLASP COLON (type)? (LEFT_BRACE arrayValues RIGHT_BRACE)? SEMICOLON?
+    : SERIES ID LEFT_CLASP expression RIGHT_CLASP COLON (type)? (LEFT_BRACE arrayValues RIGHT_BRACE)? SEMICOLON?
     ;
 
 arrayValues
@@ -323,6 +323,8 @@ primaryNumeric
 numericLiteral
     : INTEGER                                                                   #NumericLiteralInteger
     | DECIMAL                                                                   #NumericLiteralDecimal
+    | CHAR                                                                      #NumericLiteralChar
+    | booleanLiteral                                                            #NumericLiteralBoolean
     ;
 
 booleanLiteral
