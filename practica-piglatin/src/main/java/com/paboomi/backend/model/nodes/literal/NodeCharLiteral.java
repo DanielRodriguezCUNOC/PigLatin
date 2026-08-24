@@ -7,7 +7,7 @@ import lombok.Setter;
 
 /**
  * Represents a character literal production:
- * CHAR
+ * LITTERA
  */
 @Getter
 @Setter
