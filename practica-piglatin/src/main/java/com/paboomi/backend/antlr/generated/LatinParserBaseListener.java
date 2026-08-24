@@ -581,30 +581,6 @@ public class LatinParserBaseListener implements LatinParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterTypeVerum(LatinParser.TypeVerumContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitTypeVerum(LatinParser.TypeVerumContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterTypeFalsus(LatinParser.TypeFalsusContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitTypeFalsus(LatinParser.TypeFalsusContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterTypeBool(LatinParser.TypeBoolContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -1224,18 +1200,6 @@ public class LatinParserBaseListener implements LatinParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitNumericLiteralChar(LatinParser.NumericLiteralCharContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterNumericLiteralBoolean(LatinParser.NumericLiteralBooleanContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitNumericLiteralBoolean(LatinParser.NumericLiteralBooleanContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

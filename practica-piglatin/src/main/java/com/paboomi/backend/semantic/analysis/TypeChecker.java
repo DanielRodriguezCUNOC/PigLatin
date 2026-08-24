@@ -444,6 +444,14 @@ public class TypeChecker implements Visitor<String> {
     public String visitLvalue(NodeLvalue n) {
         Symbol baseSymbol = symbolTable.lookup(n.getIdentifier());
         if (baseSymbol == null) {
+            boolean looksLikeTypedArrayCreation = typeTable.exists(n.getIdentifier())
+                    && n.getSuffixes().size() == 1
+                    && n.getSuffixes().get(0) instanceof NodeIndexAccess;
+
+            if (looksLikeTypedArrayCreation) {
+                return "SERIES_" + normalizeType(n.getIdentifier());
+            }
+
             return "ERROR";
         }
 
@@ -546,7 +554,7 @@ public class TypeChecker implements Visitor<String> {
                     "Boolean expression expected, found '" + innerType + "'",
                     n.getLine(), n.getColumn());
         }
-        return "BOOLEAN";
+        return "BOOL";
     }
 
     @Override
@@ -581,7 +589,7 @@ public class TypeChecker implements Visitor<String> {
 
     @Override
     public String visitBooleanLiteral(NodeBooleanLiteral n) {
-        return "BOOLEAN";
+        return "BOOL";
     }
 
     @Override
@@ -713,7 +721,7 @@ public class TypeChecker implements Visitor<String> {
                         n.getLine(), n.getColumn());
                 return "ERROR";
             }
-            return "BOOLEAN";
+            return "BOOL";
         }
 
         // Operadores lógicos
@@ -724,7 +732,7 @@ public class TypeChecker implements Visitor<String> {
                         n.getLine(), n.getColumn());
                 return "ERROR";
             }
-            return "BOOLEAN";
+            return "BOOL";
         }
 
         errorReporter.reportError("Unknown operator: '" + op + "'", n.getLine(), n.getColumn());
@@ -746,7 +754,7 @@ public class TypeChecker implements Visitor<String> {
                         n.getLine(), n.getColumn());
                 return "ERROR";
             }
-            return "BOOLEAN";
+            return "BOOL";
         }
 
         if ("+".equals(op) || "-".equals(op)) {
@@ -883,12 +891,12 @@ public class TypeChecker implements Visitor<String> {
 
 
     private String normalizeType(String type) {
-        if ("bool".equals(type) || "BOOL".equals(type)) return "BOOLEAN";
+        if ("bool".equals(type) || "BOOLEAN".equals(type)) return "BOOL";
         return type;
     }
 
     private boolean isBooleanType(String type) {
-        return "BOOLEAN".equals(type) || "BOOL".equals(type) ||
+        return "BOOL".equals(type) || "BOOLEAN".equals(type) ||
                 "bool".equals(type) || "VERUM".equals(type) || "FALSUS".equals(type);
     }
 

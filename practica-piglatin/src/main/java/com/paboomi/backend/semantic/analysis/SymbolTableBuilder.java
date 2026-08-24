@@ -15,7 +15,6 @@ import com.paboomi.backend.model.nodes.lvalue.NodeLvalue;
 import com.paboomi.backend.model.nodes.principal.NodeProgram;
 import com.paboomi.backend.model.visitor.Visitor;
 import com.paboomi.backend.semantic.errors.SemanticErrorReporter;
-import com.paboomi.backend.semantic.expression.ConstantFolder;
 import com.paboomi.backend.semantic.symboltable.SymbolTable;
 import com.paboomi.backend.semantic.symboltable.symbols.*;
 import com.paboomi.backend.semantic.types.StructType;
@@ -28,11 +27,12 @@ import lombok.Setter;
  *
  * Traversal: Top-down.
  * Functions:
- *  - Build the Symbol Table.
- *  - Build the Type Table.
- *  - Validate strict sequencing: every identifier used must be previously declared
- *    in the same scope or an ancestor scope.
- *  - Register function signatures before analyzing their bodies.
+ * - Build the Symbol Table.
+ * - Build the Type Table.
+ * - Validate strict sequencing: every identifier used must be previously
+ * declared
+ * in the same scope or an ancestor scope.
+ * - Register function signatures before analyzing their bodies.
  *
  * !EYE!!: A local variable may shadow one from a parent scope.
  */
@@ -95,10 +95,9 @@ public class SymbolTableBuilder implements Visitor<Void> {
 
         // Register in the current scope
         VariableSymbol symbol = new VariableSymbol(
-                n.getIdentifier(), n.getType(), n.getLine(), n.getColumn()
-        );
+                n.getIdentifier(), n.getType(), n.getLine(), n.getColumn());
 
-        //* Check if the initializer is a literal and store constant value
+        // * Check if the initializer is a literal and store constant value
         if (n.getInitializer() != null) {
             ASTNode init = n.getInitializer();
             Object constVal = null;
@@ -118,8 +117,7 @@ public class SymbolTableBuilder implements Visitor<Void> {
             }
         }
 
-
-        //* Register in current scope
+        // * Register in current scope
         if (!symbolTable.declare(n.getIdentifier(), symbol)) {
             errorReporter.reportError(
                     "Variable redeclaration '" + n.getIdentifier() + "' in the same scope",
@@ -138,23 +136,22 @@ public class SymbolTableBuilder implements Visitor<Void> {
                     n.getLine(), n.getColumn());
         }
 
-        //* Visit expression of size (T-T)
-        if (n.getSizeExpression() != null) n.getSizeExpression().accept(this);
+        // * Visit expression of size (T-T)
+        if (n.getSizeExpression() != null)
+            n.getSizeExpression().accept(this);
 
         // Visit initial values
         for (ASTNode value : n.getInitialValues()) {
             value.accept(this);
         }
 
-
-        //* Regiter in symbol table
+        // * Regiter in symbol table
         ArraySymbol symbol = new ArraySymbol(
                 n.getIdentifier(),
                 n.getElementType() != null ? "SERIES_" + n.getElementType() : null,
                 0,
                 n.getElementType(),
-                n.getLine(), n.getColumn()
-        );
+                n.getLine(), n.getColumn());
         if (!symbolTable.declare(n.getIdentifier(), symbol)) {
             errorReporter.reportError(
                     "Redeclaration of array '" + n.getIdentifier() + "' in the same scope",
@@ -210,8 +207,7 @@ public class SymbolTableBuilder implements Visitor<Void> {
 
         for (NodeParameter param : n.getParameters()) {
             funcSymbol.addParameter(new ParameterSymbol(
-                    param.getDataType(), param.getDataType(), param.getLine(), param.getColumn()
-            ));
+                    param.getParameterName(), param.getDataType(), param.getLine(), param.getColumn()));
         }
         if (!symbolTable.declare(n.getFunctionName(), funcSymbol)) {
             errorReporter.reportError(
@@ -222,15 +218,14 @@ public class SymbolTableBuilder implements Visitor<Void> {
         // New scope for the function body
         symbolTable.pushScope("function " + n.getFunctionName());
 
-        //* Register parameters in the local scope
+        // * Register parameters in the local scope
         for (NodeParameter param : n.getParameters()) {
             ParameterSymbol parameterSymbol = new ParameterSymbol(
-                    param.getParameterName(), param.getDataType(), param.getLine(), param.getColumn()
-            );
+                    param.getParameterName(), param.getDataType(), param.getLine(), param.getColumn());
             symbolTable.declare(param.getParameterName(), parameterSymbol);
         }
 
-        for (ASTNode localDecl: n.getLocalVariables()){
+        for (ASTNode localDecl : n.getLocalVariables()) {
             localDecl.accept(this);
         }
 
@@ -310,7 +305,8 @@ public class SymbolTableBuilder implements Visitor<Void> {
     @Override
     public Void visitFor(NodeFor n) {
 
-        // // The for loop's init clause can declare a variable (creating a new implicit scope for the loop)
+        // // The for loop's init clause can declare a variable (creating a new implicit
+        // scope for the loop)
         symbolTable.pushScope("for block");
 
         if (n.getInitialization() != null) {
@@ -368,6 +364,14 @@ public class SymbolTableBuilder implements Visitor<Void> {
         // Validate that the base identifier exists
         Symbol symbol = symbolTable.lookup(n.getIdentifier());
         if (symbol == null) {
+            boolean looksLikeTypedArrayCreation = typeTable.exists(n.getIdentifier())
+                    && n.getSuffixes().size() == 1
+                    && n.getSuffixes().get(0) instanceof NodeIndexAccess;
+
+            if (looksLikeTypedArrayCreation) {
+                return null;
+            }
+
             errorReporter.reportError(
                     "Undeclared identifier: '" + n.getIdentifier() + "'",
                     n.getLine(), n.getColumn());
@@ -491,20 +495,24 @@ public class SymbolTableBuilder implements Visitor<Void> {
 
     @Override
     public Void visitBinaryOperation(NodeBinaryOperation n) {
-        if (n.getLeft() != null) n.getLeft().accept(this);
-        if (n.getRight() != null) n.getRight().accept(this);
+        if (n.getLeft() != null)
+            n.getLeft().accept(this);
+        if (n.getRight() != null)
+            n.getRight().accept(this);
         return null;
     }
 
     @Override
     public Void visitUnaryOperation(NodeUnaryOperation n) {
-        if (n.getOperand() != null) n.getOperand().accept(this);
+        if (n.getOperand() != null)
+            n.getOperand().accept(this);
         return null;
     }
 
     @Override
     public Void visitIncrementDecrement(NodeIncrementDecrement n) {
-        if (n.getOperand() != null) n.getOperand().accept(this);
+        if (n.getOperand() != null)
+            n.getOperand().accept(this);
         return null;
     }
 

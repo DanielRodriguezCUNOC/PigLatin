@@ -522,30 +522,6 @@ public interface LatinParserListener extends ParseTreeListener {
 	 */
 	void exitTypeLittera(LatinParser.TypeLitteraContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code TypeVerum}
-	 * labeled alternative in {@link LatinParser#type}.
-	 * @param ctx the parse tree
-	 */
-	void enterTypeVerum(LatinParser.TypeVerumContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code TypeVerum}
-	 * labeled alternative in {@link LatinParser#type}.
-	 * @param ctx the parse tree
-	 */
-	void exitTypeVerum(LatinParser.TypeVerumContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code TypeFalsus}
-	 * labeled alternative in {@link LatinParser#type}.
-	 * @param ctx the parse tree
-	 */
-	void enterTypeFalsus(LatinParser.TypeFalsusContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code TypeFalsus}
-	 * labeled alternative in {@link LatinParser#type}.
-	 * @param ctx the parse tree
-	 */
-	void exitTypeFalsus(LatinParser.TypeFalsusContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code TypeBool}
 	 * labeled alternative in {@link LatinParser#type}.
 	 * @param ctx the parse tree
@@ -1143,18 +1119,6 @@ public interface LatinParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitNumericLiteralChar(LatinParser.NumericLiteralCharContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code NumericLiteralBoolean}
-	 * labeled alternative in {@link LatinParser#numericLiteral}.
-	 * @param ctx the parse tree
-	 */
-	void enterNumericLiteralBoolean(LatinParser.NumericLiteralBooleanContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code NumericLiteralBoolean}
-	 * labeled alternative in {@link LatinParser#numericLiteral}.
-	 * @param ctx the parse tree
-	 */
-	void exitNumericLiteralBoolean(LatinParser.NumericLiteralBooleanContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code BooleanLiteralVerum}
 	 * labeled alternative in {@link LatinParser#booleanLiteral}.
