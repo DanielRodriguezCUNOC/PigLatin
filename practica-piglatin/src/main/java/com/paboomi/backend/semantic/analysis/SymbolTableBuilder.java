@@ -192,14 +192,6 @@ public class SymbolTableBuilder implements Visitor<Void> {
         // New scope for the function body
         symbolTable.pushScope("function " + n.getFunctionName());
 
-        // Register parameters in the local scope
-        for (NodeParameter param : n.getParameters()) {
-            ParameterSymbol paramSymbol = new ParameterSymbol(
-                    param.getParameterName(), param.getDataType(), param.getLine(), param.getColumn()
-            );
-            symbolTable.declare(param.getParameterName(), paramSymbol);
-        }
-
         //* Register parameters in the local scope
         for (NodeParameter param : n.getParameters()) {
             ParameterSymbol parameterSymbol = new ParameterSymbol(

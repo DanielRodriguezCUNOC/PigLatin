@@ -1,5 +1,9 @@
 package com.paboomi.frontend.gui;
 
+import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
+import com.mxgraph.swing.mxGraphComponent;
+import com.mxgraph.util.mxCellRenderer;
+import com.mxgraph.view.mxGraph;
 import com.paboomi.backend.antlr.generated.LatinParser;
 import com.paboomi.backend.dtos.CustomErrorDTO;
 import com.paboomi.backend.dtos.ParserStackStateDTO;
@@ -15,11 +19,15 @@ import com.paboomi.frontend.gui.animation.TreeRouteAnimator;
 import com.paboomi.frontend.gui.components.RoundedPanel;
 import com.paboomi.frontend.gui.components.TextLineNumber;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -33,8 +41,6 @@ public class PrincipalWindow extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(PrincipalWindow.class.getName());
     private final Font codeFont = new Font("Consolas", Font.PLAIN, 14);
     private final FacadeCompilator facade;
-    private JTree treeAST;
-    private TreeRouteAnimator treeAnimator;
     private List<ParserStackStateDTO> stackState = new ArrayList<>();
     private int currentStackStep = -1;
     private JPanel stackBlocksPanel;
@@ -44,6 +50,8 @@ public class PrincipalWindow extends javax.swing.JFrame {
     private File currentOpenFile = null;
     private JButton btnTranslatePigLatin;
     private JTextArea txtTranslatedCode;
+    private mxGraph astGraph;
+    private mxGraphComponent astGraphComponent;
 
     /**
      * Creates new form PrincipalWindow
@@ -274,17 +282,7 @@ public class PrincipalWindow extends javax.swing.JFrame {
     }
 
     private void setupCustomComponents() {
-        treeAST = new JTree();
-        treeAST.setModel(null); // Inicia vacío
-        treeAST.setBackground(new Color(30, 30, 46));
-
-        JScrollPane treeScrollPane = new JScrollPane(treeAST);
-        treeScrollPane.setBorder(null);
-
-        pnlAST.setLayout(new BorderLayout());
-        pnlAST.add(treeScrollPane, BorderLayout.CENTER);
-
-        //treeAnimator = new TreeRouteAnimator(treeAST);
+        setupPnlAST();
 
         //* Configure pnlSymbolTable
         pnlSymbolTable.removeAll();
@@ -351,6 +349,59 @@ public class PrincipalWindow extends javax.swing.JFrame {
         jTextArea1.setText("Press Compile to generate stack trace...");
     }
 
+    private void setupPnlAST(){
+
+        pnlAST.removeAll();
+        pnlAST.setLayout(new BorderLayout());
+        pnlAST.setBackground(new Color(30, 30, 46));
+
+        // Toolbar
+        JPanel astToolBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        astToolBar.setBackground(new Color(30, 30, 46));
+
+        JButton btnZoomIn = createStyledToolButton("Zoom +", new Color(137, 180, 250));
+        JButton btnZoomOut = createStyledToolButton("Zoom -", new Color(243, 139, 168));
+        JButton btnFit = createStyledToolButton("Fit View", new Color(166, 227, 161));
+        JButton btnExport = createStyledToolButton("Export PNG", new Color(245, 194, 231));
+
+        btnZoomIn.addActionListener(e -> astGraphComponent.zoomIn());
+        btnZoomOut.addActionListener(e -> astGraphComponent.zoomOut());
+        btnFit.addActionListener(e -> astGraphComponent.zoomAndCenter());
+        btnExport.addActionListener(e -> exportASTImage());
+
+        astToolBar.add(btnZoomIn);
+        astToolBar.add(btnZoomOut);
+        astToolBar.add(btnFit);
+        astToolBar.add(btnExport);
+
+        // Graph
+        astGraph = new mxGraph();
+        astGraph.setCellsEditable(false);
+        astGraph.setCellsMovable(true);
+        astGraph.setCellsResizable(false);
+        astGraph.setCellsSelectable(true);
+        astGraph.setAllowDanglingEdges(false);
+        astGraph.setAllowLoops(false);
+        astGraph.setCellsDisconnectable(false);
+        astGraph.setEdgeLabelsMovable(false);
+
+        astGraphComponent = new mxGraphComponent(astGraph);
+        astGraphComponent.setBackground(new Color(30, 30, 46));
+        astGraphComponent.getViewport().setOpaque(true);
+        astGraphComponent.getViewport().setBackground(new Color(30, 30, 46));
+        astGraphComponent.setBorder(null);
+        astGraphComponent.setConnectable(false);
+
+        // Zoom with wheel mouse
+        astGraphComponent.addMouseWheelListener(e -> {
+            if (e.getWheelRotation() < 0) astGraphComponent.zoomIn();
+            else astGraphComponent.zoomOut();
+        });
+
+        pnlAST.add(astToolBar, BorderLayout.NORTH);
+        pnlAST.add(astGraphComponent, BorderLayout.CENTER);
+    }
+
     //* Configure Translated Code Panel
     private void setupTranslatedCodePanel(){
         pnlTranslatedCode.setLayout(new BorderLayout());
@@ -413,21 +464,12 @@ public class PrincipalWindow extends javax.swing.JFrame {
             //* Clean errors table
             renderErrorsTable(List.of(), tblErrorReport);
 
-            //* Assign the new generated tree model to the JTree.
-            treeAST.setModel(result.getTreeModel());
-
-            //* Expand all branches
-            for (int i = 0; i < treeAST.getRowCount(); i++) {
-                treeAST.expandRow(i);
-            }
+            renderASTGraph((DefaultTreeModel) result.getTreeModel());
 
             //* Dynamically switch to the AST tab.
             jTabbedPane1.setSelectedComponent(pnlAST);
 
             loadStackStates(result.getStackStateList());
-
-            //* Start the route animation (node every 400ms)
-            //treeAnimator.startAnimation(400);
 
             renderSymbolAndTypeTables(result);
 
@@ -508,9 +550,13 @@ public class PrincipalWindow extends javax.swing.JFrame {
         };
 
         //* Iterate from the local to the global level.
-        int level = result.getSymbolTable().getScopeDepth() - 1;
+
+        //* I'm just testing things out; I hope I don't forget to turn off comments.
+        //int level = result.getSymbolTable().getScopeDepth() - 1;
         for (Scope scope : result.getSymbolTable().getAllScopes()) {
 
+            //* I want to test if I can remove negative levels -_-
+            /*
             for (Symbol sym : scope.getSymbols().values()) {
                 Object[] rowData = {
                         level, //* Scope level
@@ -520,7 +566,17 @@ public class PrincipalWindow extends javax.swing.JFrame {
                 symModel.addRow(rowData);
             }
             level--;
+             */
+            for (Symbol sym : scope.getSymbols().values()){
+                Object[] rowData = {
+                        scope.getId(),
+                        sym.getName(),
+                        sym.toString()
+                };
+                symModel.addRow(rowData);
+            }
         }
+
         tblSymbols.setModel(symModel);
 
         // --- Render Type Table ---
@@ -762,11 +818,11 @@ public class PrincipalWindow extends javax.swing.JFrame {
                     currentOpenFile = new java.io.File(currentOpenFile.getAbsolutePath() + ".lat");
                 }
             } else {
-                return; // The user cancelled.
+                return;
             }
         }
 
-        // Save the editor's text to the original file.
+        //* Save the editor's text to the original file.
         try {
             java.nio.file.Files.writeString(currentOpenFile.toPath(), txtACodeEditor.getText());
             lblStateBar.setText(" Status: Saved " + currentOpenFile.getName() + " | Mode: Editing ");
@@ -791,7 +847,7 @@ public class PrincipalWindow extends javax.swing.JFrame {
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             java.io.File pigFile = fileChooser.getSelectedFile();
 
-            // Asegurarse de que tenga la extensión .pig
+            //* Must have .pig extenssion
             if (!pigFile.getName().toLowerCase().endsWith(".pig")) {
                 pigFile = new java.io.File(pigFile.getAbsolutePath() + ".pig");
             }
@@ -801,6 +857,98 @@ public class PrincipalWindow extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "PigLatin file exported successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             } catch (java.io.IOException ex) {
                 JOptionPane.showMessageDialog(this, "Error exporting file: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private JButton createStyledToolButton(String text, Color bg) {
+        JButton btn = new JButton(text);
+        btn.setBackground(bg);
+        btn.setForeground(Color.BLACK);
+        btn.setFont(codeFont.deriveFont(Font.BOLD, 11f));
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(5, 12, 5, 12));
+        return btn;
+    }
+
+    private void renderASTGraph(DefaultTreeModel treeModel) {
+        if (treeModel == null || treeModel.getRoot() == null) {
+            astGraph.removeCells(astGraph.getChildVertices(astGraph.getDefaultParent()));
+            return;
+        }
+        astGraph.getModel().beginUpdate();
+        try {
+            astGraph.removeCells(astGraph.getChildCells(astGraph.getDefaultParent(), true, true));
+            TreeNode root = (TreeNode) treeModel.getRoot();
+            Map<TreeNode, Object> vertexMap = new HashMap<>();
+            buildGraphFromTreeNode(root, vertexMap);
+            mxHierarchicalLayout layout = new mxHierarchicalLayout(astGraph);
+            layout.setOrientation(SwingConstants.VERTICAL);
+            layout.setInterRankCellSpacing(50);
+            layout.setIntraCellSpacing(25);
+            layout.setParallelEdgeSpacing(15);
+            layout.execute(astGraph.getDefaultParent());
+        } finally {
+            astGraph.getModel().endUpdate();
+        }
+        SwingUtilities.invokeLater(() -> astGraphComponent.zoomAndCenter());
+    }
+
+    private Object buildGraphFromTreeNode(TreeNode node, Map<TreeNode, Object> vertexMap) {
+        String label = node.toString();
+        boolean nonTerminal = isNonTerminal(label);
+        boolean isLeaf = node.isLeaf();
+        int width = Math.max(120, label.length() * 9 + 30);
+        int height = 38;
+
+        StringBuilder style = new StringBuilder();
+        style.append("shape=rectangle;rounded=1;arcSize=10;fontSize=12;");
+        style.append("fontColor=#11111B;labelPosition=center;verticalLabelPosition=middle;");
+        style.append("align=center;verticalAlign=middle;");
+
+        if (isLeaf) {
+            style.append("shape=ellipse;fillColor=#C6EBC5;strokeColor=#A6E3A1;strokeWidth=2;");
+        } else if (nonTerminal) {
+            style.append("fillColor=#D0E6FF;strokeColor=#89B4FA;strokeWidth=2;");
+        } else {
+            style.append("fillColor=#F8C6CB;strokeColor=#F38BA8;strokeWidth=1;");
+        }
+
+        Object vertex = astGraph.insertVertex(
+                astGraph.getDefaultParent(), null, label, 0, 0, width, height, style.toString()
+        );
+        vertexMap.put(node, vertex);
+
+        for (int i = 0; i < node.getChildCount(); i++) {
+            TreeNode child = node.getChildAt(i);
+            Object childVertex = buildGraphFromTreeNode(child, vertexMap);
+            String edgeStyle = "strokeColor=#6C7086;endArrow=block;endSize=8;endFill=1;strokeWidth=1.5;edgeStyle=elbowEdgeStyle;elbow=vertical;";
+            astGraph.insertEdge(astGraph.getDefaultParent(), null, "", vertex, childVertex, edgeStyle);
+        }
+        return vertex;
+    }
+
+    private void exportASTImage() {
+        BufferedImage image = mxCellRenderer.createBufferedImage(
+                astGraph, null, 1, new Color(30, 30, 46), true, null
+        );
+        if (image == null) {
+            JOptionPane.showMessageDialog(this, "No AST rendered to export.", "Warning", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Export AST as PNG");
+        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PNG Image (*.png)", "png"));
+        if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = chooser.getSelectedFile();
+            if (!file.getName().toLowerCase().endsWith(".png")) {
+                file = new File(file.getAbsolutePath() + ".png");
+            }
+            try {
+                ImageIO.write(image, "PNG", file);
+                JOptionPane.showMessageDialog(this, "AST exported successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error exporting image: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }

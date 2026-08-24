@@ -4,6 +4,7 @@ import com.paboomi.backend.semantic.symboltable.symbols.Symbol;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -26,6 +27,15 @@ public class Scope {
     private final Scope parent;
     //* Symbol identifier
     private final String name;
+    //* ID number for the scope
+    private int id;
+
+    public Scope(int id) {
+        this.id = id;
+        this.symbols = new HashMap<>();
+        this.parent = null;
+        this.name = null;
+    }
 
     public Scope(String name, Scope parent) {
         this.parent = parent;
@@ -33,9 +43,16 @@ public class Scope {
         this.symbols = new LinkedHashMap<>();
     }
 
+    public Scope(int id, String name, Scope parent){
+        this.id = id;
+        this.name = name;
+        this.parent = parent;
+        this.symbols = new LinkedHashMap<>();
+    }
+
 
     /**
-     * This methos is very important because:
+     * These methos are very important because:
      * @param name represent the symbol identifier
      * @param symbol represent the symbol for registerer
      * @return true if the symbol was registered with exit
@@ -87,6 +104,10 @@ public class Scope {
 
     public boolean isGlobal(){
         return parent == null;
+    }
+
+    public boolean containsSymbol(String name) {
+        return symbols.containsKey(name);
     }
 
     @Override

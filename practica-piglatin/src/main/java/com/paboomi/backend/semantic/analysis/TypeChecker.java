@@ -15,6 +15,7 @@ import com.paboomi.backend.model.nodes.lvalue.NodeLvalue;
 import com.paboomi.backend.model.nodes.principal.NodeProgram;
 import com.paboomi.backend.model.visitor.Visitor;
 import com.paboomi.backend.semantic.errors.SemanticErrorReporter;
+import com.paboomi.backend.semantic.expression.ConstantFolder;
 import com.paboomi.backend.semantic.symboltable.SymbolTable;
 import com.paboomi.backend.semantic.symboltable.symbols.*;
 import com.paboomi.backend.semantic.types.StructType;
@@ -47,12 +48,14 @@ public class TypeChecker implements Visitor<String> {
     private final TypeTable typeTable;
     private final SemanticErrorReporter errorReporter;
     private final Deque<String> functionReturnStack;
+    private final ConstantFolder constantFolder;
 
     public TypeChecker(TypeTable typeTable, SemanticErrorReporter errorReporter) {
         this.symbolTable = new SymbolTable();
         this.typeTable = typeTable;
         this.errorReporter = errorReporter;
         this.functionReturnStack = new ArrayDeque<>();
+        this.constantFolder = new ConstantFolder(errorReporter);
     }
 
     // ============================================================
@@ -197,12 +200,6 @@ public class TypeChecker implements Visitor<String> {
         functionReturnStack.push(n.getReturnType() != null ? n.getReturnType() : "VOID");
 
         symbolTable.pushScope("function " + n.getFunctionName());
-
-        // Record parameters
-        for (NodeParameter param : n.getParameters()) {
-            symbolTable.declare(param.getParameterName(),
-                    new ParameterSymbol(param.getParameterName(), param.getDataType(), param.getLine(), param.getColumn()));
-        }
 
         //* Register parameters in the local scope
         for (NodeParameter param : n.getParameters()) {
@@ -632,17 +629,28 @@ public class TypeChecker implements Visitor<String> {
 
         String op = n.getOperator();
 
-        // Arithmetic operators
+        //* Detection of division by zero in constant expressions
+        if ("/".equals(op)) {
+            Object rightConst = constantFolder.evaluate(n.getRight());
+            if (rightConst != null) {
+                double denom = toDouble(rightConst);
+                if (denom == 0.0) errorReporter.reportError(
+                        "Division by zero in constant expression",
+                            n.getLine(), n.getColumn());
+            }
+        }
+
+        //* Arithmetic operators
         if ("+".equals(op) || "-".equals(op) || "*".equals(op) || "/".equals(op)) {
             return resolveArithmeticType(leftType, rightType, op, n);
         }
 
-        // Concatenation: if any operand is TEXTUM, the result is TEXTUM.
+        //* Concatenation: if any operand is TEXTUM, the result is TEXTUM.
         if ("+".equals(op) && ("TEXTUM".equals(leftType) || "TEXTUM".equals(rightType))) {
             return "TEXTUM";
         }
 
-        // Relational operators
+        //* Relational operators
         if ("==".equals(op) || "!=".equals(op) || "<".equals(op) || ">".equals(op) || "<=".equals(op) || ">=".equals(op)) {
             if (!areTypesCompatible(leftType, rightType)) {
                 errorReporter.reportError(
@@ -862,6 +870,14 @@ public class TypeChecker implements Visitor<String> {
         }
 
         return false;
+    }
+
+    private double toDouble(Object obj) {
+        if (obj instanceof Integer) return ((Integer) obj).doubleValue();
+        if (obj instanceof Double) return (Double) obj;
+        if (obj instanceof Boolean) return ((Boolean) obj) ? 1.0 : 0.0;
+        if (obj instanceof Character) return (double) ((Character) obj);
+        return 0.0;
     }
 
 
