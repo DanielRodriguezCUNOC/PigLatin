@@ -15,6 +15,7 @@ public abstract class Symbol {
     protected String type;
     protected int line;
     protected int column;
+    protected Object constantValue;
 
     public Symbol(String name, String type, int line, int column) {
         this.name = name;

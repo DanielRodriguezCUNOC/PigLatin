@@ -160,7 +160,11 @@ public class PigLatinCodeGenerator implements Visitor<Void> {
         append(" ");
         appendIdentifier(n.getIdentifier());
         append("[");
-        append(String.valueOf(n.getSize()));
+        if (n.getSizeExpression() != null) {
+            n.getSizeExpression().accept(this);
+        } else {
+            append(String.valueOf(n.getSize()));
+        }
         append("]");
         if (n.getElementType() != null) {
             append(" : ");

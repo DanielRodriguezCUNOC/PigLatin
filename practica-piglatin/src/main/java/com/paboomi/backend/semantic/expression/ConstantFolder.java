@@ -15,6 +15,9 @@ import com.paboomi.backend.model.nodes.principal.ASTNode;
 import com.paboomi.backend.model.nodes.principal.NodeProgram;
 import com.paboomi.backend.model.visitor.Visitor;
 import com.paboomi.backend.semantic.errors.SemanticErrorReporter;
+import com.paboomi.backend.semantic.symboltable.SymbolTable;
+import com.paboomi.backend.semantic.symboltable.symbols.Symbol;
+import com.paboomi.backend.semantic.symboltable.symbols.VariableSymbol;
 
 /**
  * This class evaluate expressions just in time using the visitor (again -_-)
@@ -23,9 +26,11 @@ import com.paboomi.backend.semantic.errors.SemanticErrorReporter;
 public class ConstantFolder implements Visitor<Object> {
 
     private final SemanticErrorReporter errorReporter;
+    private final SymbolTable symbolTable;
 
-    public ConstantFolder(SemanticErrorReporter errorReporter) {
+    public ConstantFolder(SemanticErrorReporter errorReporter,  SymbolTable symbolTable) {
         this.errorReporter = errorReporter;
+        this.symbolTable = symbolTable;
     }
 
     //* Method for evaluate a node
@@ -47,6 +52,8 @@ public class ConstantFolder implements Visitor<Object> {
     public Object visitArrayDeclaration(NodeArrayDeclaration n) {
         return null;
     }
+
+
 
     @Override
     public Object visitStructDefinition(NodeStructDefinition n) {
@@ -162,6 +169,13 @@ public class ConstantFolder implements Visitor<Object> {
 
     @Override
     public Object visitIdentifier(NodeIdentifier n) {
+        Symbol sym = symbolTable.lookup(n.getId());
+        if (sym instanceof VariableSymbol) {
+            Object constVal = sym.getConstantValue();
+            if (constVal != null) {
+                return constVal;
+            }
+        }
         return null;
     }
 

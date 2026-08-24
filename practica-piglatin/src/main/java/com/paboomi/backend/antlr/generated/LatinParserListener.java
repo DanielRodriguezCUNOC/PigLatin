@@ -546,6 +546,18 @@ public interface LatinParserListener extends ParseTreeListener {
 	 */
 	void exitTypeFalsus(LatinParser.TypeFalsusContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code TypeBool}
+	 * labeled alternative in {@link LatinParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeBool(LatinParser.TypeBoolContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code TypeBool}
+	 * labeled alternative in {@link LatinParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeBool(LatinParser.TypeBoolContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code TypeID}
 	 * labeled alternative in {@link LatinParser#type}.
 	 * @param ctx the parse tree
@@ -1119,6 +1131,30 @@ public interface LatinParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitNumericLiteralDecimal(LatinParser.NumericLiteralDecimalContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code NumericLiteralChar}
+	 * labeled alternative in {@link LatinParser#numericLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void enterNumericLiteralChar(LatinParser.NumericLiteralCharContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code NumericLiteralChar}
+	 * labeled alternative in {@link LatinParser#numericLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void exitNumericLiteralChar(LatinParser.NumericLiteralCharContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code NumericLiteralBoolean}
+	 * labeled alternative in {@link LatinParser#numericLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void enterNumericLiteralBoolean(LatinParser.NumericLiteralBooleanContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code NumericLiteralBoolean}
+	 * labeled alternative in {@link LatinParser#numericLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void exitNumericLiteralBoolean(LatinParser.NumericLiteralBooleanContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code BooleanLiteralVerum}
 	 * labeled alternative in {@link LatinParser#booleanLiteral}.

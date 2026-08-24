@@ -55,7 +55,7 @@ public class TypeChecker implements Visitor<String> {
         this.typeTable = typeTable;
         this.errorReporter = errorReporter;
         this.functionReturnStack = new ArrayDeque<>();
-        this.constantFolder = new ConstantFolder(errorReporter);
+        this.constantFolder = new ConstantFolder(errorReporter, symbolTable);
     }
 
     // ============================================================
@@ -137,6 +137,31 @@ public class TypeChecker implements Visitor<String> {
         String elementType = n.getElementType() != null ? normalizeType(n.getElementType()) : null;
         n.setElementType(elementType);
 
+        //* Evaluate size
+        if (n.getSizeExpression() != null) {
+
+            //* Evaluate if is a numeric expression
+            String sizeType = n.getSizeExpression().accept(this);
+            if (!"NUMERUS".equals(sizeType) && !"DECIMALIS".equals(sizeType)) {
+                errorReporter.reportError(
+                        "Array size must be numeric, found '" + sizeType + "'",
+                        n.getLine(), n.getColumn());
+            }
+
+            //* Try evaluate the expression like constatnt
+            ConstantFolder folder = new ConstantFolder(errorReporter, symbolTable);
+            Object sizeValue = folder.evaluate(n.getSizeExpression());
+            if (sizeValue instanceof Integer) {
+                //* Get integer value
+                int sizeInt = toInteger(sizeValue);
+                n.setSize(sizeInt);
+            } else{
+                errorReporter.reportError(
+                        "Array size must be a constant expression",
+                        n.getLine(), n.getColumn());
+            }
+        }
+
         //* Validate initializers
         for (ASTNode value : n.getInitialValues()) {
             String valType = value.accept(this);
@@ -152,21 +177,26 @@ public class TypeChecker implements Visitor<String> {
             }
         }
 
-        //* Register as ArraySymbol (SERIES_elementType type)
-        String arrayType = elementType != null ? "SERIES_" + elementType : null;
-        ArraySymbol symbol = new ArraySymbol(
-                n.getIdentifier(),
-                arrayType,
-                n.getSize(),
-                elementType,
-                n.getLine(),
-                n.getColumn()
-        );
-        if (!symbolTable.declare(n.getIdentifier(), symbol)) {
-            errorReporter.reportError(
-                    "Redeclaration of array '" + n.getIdentifier() + "' in the same scope",
+        //* Get final size for the symbol
+        int finalSize = n.getSize();
+        ArraySymbol sym = (ArraySymbol) symbolTable.lookupCurrent(n.getIdentifier());
+        if (sym != null) {
+            sym.setSize(finalSize);
+            sym.setElementType(elementType);
+        }else{
+            ArraySymbol symbol = new ArraySymbol(
+                    n.getIdentifier(),
+                    elementType != null ? "SERIES_" + elementType : null,
+                    finalSize,
+                    elementType,
                     n.getLine(), n.getColumn()
             );
+
+            if (!symbolTable.declare(n.getIdentifier(), symbol)) {
+                errorReporter.reportError(
+                        "Redeclaration of array '" + n.getIdentifier() + "' in the same scope",
+                        n.getLine(), n.getColumn());
+            }
         }
 
         return null;
@@ -434,6 +464,23 @@ public class TypeChecker implements Visitor<String> {
                 }
                 currentType = normalizeType(fieldType);
             } else if (suffix instanceof NodeIndexAccess indexAccess) {
+
+                if (baseSymbol instanceof ArraySymbol arrSym){
+                    ConstantFolder folder = new ConstantFolder(errorReporter, symbolTable);
+                    Object idxResult = folder.evaluate(indexAccess.getIndexExpression());
+
+                    if (idxResult instanceof Integer) {
+                        int idx = (Integer) idxResult;
+                        if (idx < 0 || idx >= arrSym.getSize()) {
+                            errorReporter.reportError(
+                                    "Array index out of bounds: " + idx + " (size " +
+                                            arrSym.getSize() + ")",
+                                    indexAccess.getLine(), indexAccess.getColumn()
+                            );
+                        }
+                    }
+                }
+
                 String indexType = indexAccess.getIndexExpression().accept(this);
                 if (indexType != null && !"NUMERUS".equals(indexType)) {
                     errorReporter.reportError(
@@ -838,7 +885,7 @@ public class TypeChecker implements Visitor<String> {
     }
 
     private boolean isNumericType(String type) {
-        return "NUMERUS".equals(type) || "DECIMALIS".equals(type);
+        return "NUMERUS".equals(type) || "DECIMALIS".equals(type) || "LITTERA".equals(type);
     }
 
     /**
@@ -878,6 +925,14 @@ public class TypeChecker implements Visitor<String> {
         if (obj instanceof Boolean) return ((Boolean) obj) ? 1.0 : 0.0;
         if (obj instanceof Character) return (double) ((Character) obj);
         return 0.0;
+    }
+
+    private int toInteger(Object value) {
+        if (value instanceof Integer) return (Integer) value;
+        if (value instanceof Double) return ((Double) value).intValue();
+        if (value instanceof Boolean) return ((Boolean) value) ? 1 : 0;
+        if (value instanceof Character) return (int) (Character) value;
+        return 0;
     }
 
 

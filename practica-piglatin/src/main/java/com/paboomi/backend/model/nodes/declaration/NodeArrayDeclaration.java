@@ -18,37 +18,54 @@ import java.util.List;
 public class NodeArrayDeclaration extends NodeDeclaration {
 
     private String identifier;
-    private int size;
     private String elementType;
     private final List<ASTNode> initialValues;
+    private int size;
+    private ASTNode sizeExpression;
 
     public NodeArrayDeclaration(){
-        this(null, 0, null, new ArrayList<>(), 0, 0);
+        this(null, null, null, new ArrayList<>(), 0, 0);
     }
 
     public NodeArrayDeclaration(int line, int column) {
-        this(null, 0, null, new ArrayList<>(), line, column);
+        this(null, null, null, new ArrayList<>(), line, column);
     }
 
-    public NodeArrayDeclaration(String identifier, int size, String elementType, List<ASTNode> initialValues ,int line, int column) {
+    public NodeArrayDeclaration(String identifier, ASTNode sizeExpression, String elementType, List<ASTNode> initialValues ,int line, int column) {
+        super(line, column);
+        this.identifier = identifier;
+        this.sizeExpression = sizeExpression;
+        this.elementType = elementType;
+        this.initialValues = initialValues != null ? initialValues : new ArrayList<>();
+    }
+
+    public NodeArrayDeclaration(String identifier, int size, String elementType,
+                                List<ASTNode> initialValues, int line, int column) {
         super(line, column);
         this.identifier = identifier;
         this.size = size;
         this.elementType = elementType;
         this.initialValues = initialValues != null ? initialValues : new ArrayList<>();
+        this.sizeExpression = null;
     }
 
+    public int getEvaluatedSize(){
+        return -1;
+    }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("series ").append(identifier).
-                append("[").append(size).append("]");
-
+        sb.append("series ").append(identifier).append("[");
+        if (sizeExpression != null) {
+            sb.append(sizeExpression.toString());
+        } else {
+            sb.append(size);
+        }
+        sb.append("]");
         if (elementType != null) sb.append(" : ").append(elementType);
-        if (initialValues.isEmpty()) {
+        if (!initialValues.isEmpty()) {
             sb.append(" = {");
-
             for (int i = 0; i < initialValues.size(); i++) {
                 sb.append(initialValues.get(i).toString());
                 if (i < initialValues.size() - 1) sb.append(", ");
