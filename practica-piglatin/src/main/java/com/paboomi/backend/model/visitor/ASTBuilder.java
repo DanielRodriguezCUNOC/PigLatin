@@ -111,12 +111,18 @@ public class ASTBuilder extends LatinParserBaseVisitor<ASTNode> {
     public ASTNode visitDeclaration(LatinParser.DeclarationContext ctx) {
         String id = ctx.ID().getText();
         String type = ctx.type() != null ? extractType(ctx.type()) : null;
-        ASTNode initializer = ctx.expression() != null ? visit(ctx.expression()) : null;
+        ASTNode initializer = ctx.expression() != null
+            ? normalizeInitializerLiteral(
+            visit(ctx.expression()),
+            ctx.expression().getText(),
+            ctx.getStart().getLine(),
+            ctx.getStart().getCharPositionInLine())
+            : null;
 
         return new NodeVariableDeclaration(
                 id,
                 type,
-                null,
+                initializer,
                 ctx.getStart().getLine(),
                 ctx.getStart().getCharPositionInLine());
     }
@@ -137,7 +143,11 @@ public class ASTBuilder extends LatinParserBaseVisitor<ASTNode> {
 
         if (ctx.arrayValues() != null) {
             for (LatinParser.ExpressionContext exprCtx : ctx.arrayValues().expression()) {
-                ASTNode value = visit(exprCtx);
+                ASTNode value = normalizeInitializerLiteral(
+                        visit(exprCtx),
+                        exprCtx.getText(),
+                        exprCtx.getStart().getLine(),
+                        exprCtx.getStart().getCharPositionInLine());
                 if (value != null) {
                     arrDecl.getInitialValues().add(value);
                 }
@@ -436,11 +446,17 @@ public class ASTBuilder extends LatinParserBaseVisitor<ASTNode> {
     public ASTNode visitForInitWithDeclaration(LatinParser.ForInitWithDeclarationContext ctx) {
         String id = ctx.ID().getText();
         String type = ctx.type() != null ? extractType(ctx.type()) : null;
-        ASTNode initializer = ctx.expression() != null ? visit(ctx.expression()) : null;
+        ASTNode initializer = ctx.expression() != null
+            ? normalizeInitializerLiteral(
+            visit(ctx.expression()),
+            ctx.expression().getText(),
+            ctx.getStart().getLine(),
+            ctx.getStart().getCharPositionInLine())
+            : null;
         return new NodeVariableDeclaration(
                 id,
                 type,
-                null,
+                initializer,
                 ctx.getStart().getLine(),
                 ctx.getStart().getCharPositionInLine());
     }
@@ -1161,5 +1177,20 @@ public class ASTBuilder extends LatinParserBaseVisitor<ASTNode> {
             }
         }
         return null;
+    }
+
+    private ASTNode normalizeInitializerLiteral(ASTNode node, String rawText, int line, int column) {
+        if (node instanceof NodeIntegerLiteral) {
+            if ("verum".equals(rawText)) {
+                return new NodeBooleanLiteral(true, line, column);
+            }
+            if ("falsus".equals(rawText)) {
+                return new NodeBooleanLiteral(false, line, column);
+            }
+            if (rawText != null && rawText.length() >= 3 && rawText.startsWith("'") && rawText.endsWith("'")) {
+                return new NodeCharLiteral(rawText.charAt(1), line, column);
+            }
+        }
+        return node;
     }
 }
