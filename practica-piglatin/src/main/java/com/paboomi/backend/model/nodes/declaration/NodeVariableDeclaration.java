@@ -1,6 +1,5 @@
 package com.paboomi.backend.model.nodes.declaration;
 
-import com.paboomi.backend.model.nodes.expression.NodeExpression;
 import com.paboomi.backend.model.nodes.principal.ASTNode;
 import com.paboomi.backend.model.visitor.Visitor;
 import lombok.Getter;
@@ -17,7 +16,7 @@ public class NodeVariableDeclaration extends NodeDeclaration {
     private String identifier;
     private String type;
     //* initialization expression
-    private NodeExpression initializer;
+    private ASTNode initializer;
 
     public NodeVariableDeclaration(){
         this(null, null, null, 0, 0);
@@ -29,7 +28,7 @@ public class NodeVariableDeclaration extends NodeDeclaration {
 
     public NodeVariableDeclaration(String identifier,
                                    String type,
-                                   NodeExpression initializer,
+                                   ASTNode initializer,
                                    int line, int column) {
         super(line, column);
         this.identifier = identifier;

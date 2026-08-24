@@ -113,6 +113,11 @@ public class TypeChecker implements Visitor<String> {
             }
         }
 
+        Object constantValue = null;
+        if (n.getInitializer() != null) {
+            constantValue = constantFolder.evaluate(n.getInitializer());
+        }
+
         //* Register in the symbol table with the type already normalized
         VariableSymbol symbol = new VariableSymbol(
                 n.getIdentifier(),
@@ -120,6 +125,9 @@ public class TypeChecker implements Visitor<String> {
                 n.getLine(),
                 n.getColumn()
         );
+        if (constantValue != null) {
+            symbol.setConstantValue(constantValue);
+        }
         if (!symbolTable.declare(n.getIdentifier(), symbol)) {
             errorReporter.reportError(
                     "Variable redeclaration '" + n.getIdentifier() + "' in the same scope",
